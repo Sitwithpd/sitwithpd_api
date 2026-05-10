@@ -9,6 +9,7 @@ import {
   updateCamp,
   deleteCamp,
   getCampParticipants,
+  getMyCampRegistration,
   createCampTier,
   updateCampTier,
   deleteCampTier,
@@ -31,6 +32,7 @@ router.get('/:id', getCampById);
 
 // ── User ──────────────────────────────────────────────────────────────────────
 router.post('/:id/register', authenticate, enforceVerifiedEmailIfRequired, registerForCamp);
+router.get('/:id/my-registration', authenticate, getMyCampRegistration);
 
 // ── Admin: Camp CRUD ──────────────────────────────────────────────────────────
 router.post('/', authenticate, adminOnly, uploadImage.single('thumbnail'), createCamp);

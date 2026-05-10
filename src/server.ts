@@ -2,12 +2,14 @@ import 'dotenv/config';
 import app from './app';
 import prisma from './config/prisma';
 import { processExpiredConsultationPayments } from './services/consultationExpiry.service';
+import { processExpiredCampRegistrations } from './services/campRegistrationExpiry.service';
 import { processCampStatusTransitions } from './services/campStatus.service';
 import { syncPaystackPaymentSessionTimeoutIfEnabled } from './lib/paystackIntegration';
 
 const PORT = process.env.PORT || 5000;
 
 const CONSULTATION_EXPIRY_INTERVAL_MS = 60 * 1000;
+const CAMP_REGISTRATION_EXPIRY_INTERVAL_MS = 60 * 1000;
 const CAMP_STATUS_INTERVAL_MS = 60 * 1000;
 
 const startServer = async () => {
@@ -23,6 +25,12 @@ const startServer = async () => {
         console.error('[consultation-expiry]', err)
       );
     }, CONSULTATION_EXPIRY_INTERVAL_MS);
+
+    setInterval(() => {
+      processExpiredCampRegistrations().catch((err) =>
+        console.error('[camp-registration-expiry]', err)
+      );
+    }, CAMP_REGISTRATION_EXPIRY_INTERVAL_MS);
 
     setInterval(() => {
       processCampStatusTransitions().catch((err) => console.error('[camp-status]', err));

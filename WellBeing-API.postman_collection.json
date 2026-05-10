@@ -599,7 +599,22 @@
               "mode": "raw",
               "raw": "{\n  \"tierId\": \"{{campTierId}}\",\n  \"applicantDetails\": {\n    \"fullName\": \"Jane Doe\",\n    \"phone\": \"+2348000000000\",\n    \"emergencyContact\": {\n      \"name\": \"John Doe\",\n      \"phone\": \"+2348000000001\",\n      \"relationship\": \"Spouse\"\n    },\n    \"dietaryRestrictions\": \"Vegetarian\",\n    \"accommodationPreference\": \"Ground floor if possible\",\n    \"partyMembers\": [],\n    \"notes\": \"First time attending.\"\n  }\n}"
             },
-            "description": "Submits a camp application. `tierId` is required (camp must have tiers). applicantDetails captures dietary info, emergency contact, partyMembers for Couple/Family, etc. Initialize payment with campRegistrationId; amount uses the selected tier price."
+            "description": "Submits or refreshes a camp application. tierId required. Success 201: data includes status=PENDING_PAYMENT, paymentExpiresAt (~60 min ISO), tier, camp. Message: Application submitted. Please complete payment within 60 minutes. Then POST /api/payments/initialize with type CAMP and itemId = registration id.\n\nRetry errors: You have already applied for this camp. (CONFIRMED); You have a pending application for this camp... (active hold — resume Paystack); A previous payment is pending review... (SUCCESS payment awaiting ops refund). After worker marks EXPIRED, POST register again reuses the same row with a fresh paymentExpiresAt."
+          }
+        },
+        {
+          "name": "[USER] Get My Camp Registration",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{authToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/camps/{{campId}}/my-registration",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "camps", "{{campId}}", "my-registration"]
+            },
+            "description": "Returns the logged-in user's registration for this camp (status, paymentExpiresAt, tier, payment) or data=null when none. Use to drive Apply vs Complete payment vs Confirmed without guessing."
           }
         },
         {
@@ -678,10 +693,16 @@
               "path": ["api", "camps", "{{campId}}", "participants"],
               "query": [
                 { "key": "page", "value": "1" },
-                { "key": "limit", "value": "20" }
+                { "key": "limit", "value": "20" },
+                {
+                  "key": "status",
+                  "value": "CONFIRMED",
+                  "description": "Optional filter: PENDING_PAYMENT | CONFIRMED | EXPIRED | CANCELLED (omit for all)",
+                  "disabled": true
+                }
               ]
             },
-            "description": "Admin only. Paginated list for this camp. Response: { data, meta }."
+            "description": "Admin only. Paginated { data, meta }. Each row includes status and paymentExpiresAt for badges (PENDING_PAYMENT, CONFIRMED, EXPIRED, CANCELLED). Default lists all statuses; optional query ?status=CONFIRMED etc."
           }
         },
         {
@@ -1304,7 +1325,7 @@
               "mode": "raw",
               "raw": "{\n  \"type\": \"CAMP\",\n  \"itemId\": \"{{campRegistrationId}}\"\n}"
             },
-            "description": "Initializes Paystack for a camp application. itemId is the camp registration id. Amount uses the selected tier price only."
+            "description": "Initializes Paystack for CAMP. itemId = camp registration id. Only allowed while registration is payable (PENDING_PAYMENT with future paymentExpiresAt).\n\n400: You have already paid for this application. OR This application has expired. Please re-apply to obtain a new payment window.\n\nStale PENDING Paystack sessions are detached (FAILED + null FK) before creating the new Payment row."
           }
         },
         {
@@ -1377,7 +1398,7 @@
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
             "url": { "raw": "{{baseUrl}}/api/dashboard", "host": ["{{baseUrl}}"], "path": ["api", "dashboard"] },
-            "description": "Returns purchases (each successful programme purchase includes `progress`: percent, weeks breakdown, `isProgramCompleted`, `programCompletedAt`), camp registrations, and consultations."
+            "description": "Returns purchases (successful programme purchases include progress rollup), camp registrations (status, paymentExpiresAt, payment.status/amount/createdAt for countdown CTAs), and consultations."
           }
         },
         {

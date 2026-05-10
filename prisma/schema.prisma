@@ -39,6 +39,18 @@ enum CampStatus {
   CANCELLED
 }
 
+// Lifecycle for a single camp registration row.
+// - PENDING_PAYMENT: created by /api/camps/:id/register; holds a seat for `paymentExpiresAt` (default 60 min).
+// - CONFIRMED:       Paystack webhook reported success while still within the hold window.
+// - EXPIRED:         hold elapsed without a successful charge; seat is released and the row is reusable on retry.
+// - CANCELLED:       explicit void by admin/support; seat released. Distinct from EXPIRED for reporting.
+enum CampRegistrationStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  EXPIRED
+  CANCELLED
+}
+
 // Blog listing filters (design: Reflection, Wellbeing, Personal Growth)
 enum BlogCategory {
   REFLECTION
@@ -312,13 +324,20 @@ model BlogPost {
 }
 
 model CampRegistration {
-  id               String   @id @default(cuid())
+  id               String                 @id @default(cuid())
   userId           String
   campId           String
   tierId           String?
-  participantCount Int      @default(1) // Seats consumed (copied from tier.seatsPerUnit at creation)
+  participantCount Int                    @default(1) // Seats consumed (copied from tier.seatsPerUnit at creation)
   applicantDetails Json? // Dietary, emergency contact, partner/family names, accommodation prefs, etc.
-  createdAt        DateTime @default(now())
+  // Lifecycle: PENDING_PAYMENT (default on register) → CONFIRMED (webhook) | EXPIRED (worker) | CANCELLED (admin).
+  // After EXPIRED, the user may retry the same camp; the row is reused (reset to PENDING_PAYMENT).
+  status           CampRegistrationStatus @default(PENDING_PAYMENT)
+  // Wall-clock deadline for completing payment while status = PENDING_PAYMENT (typically now + 60 min).
+  // Null when status is no longer PENDING_PAYMENT.
+  paymentExpiresAt DateTime?
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
 
   user    User      @relation(fields: [userId], references: [id])
   camp    Camp      @relation(fields: [campId], references: [id], onDelete: Cascade)
@@ -326,6 +345,10 @@ model CampRegistration {
   payment Payment?
 
   @@unique([userId, campId])
+  // Inventory math (seatsTaken / per-tier units) filters by (campId, status).
+  @@index([campId, status])
+  // Expiry worker scans PENDING_PAYMENT rows whose paymentExpiresAt has elapsed.
+  @@index([status, paymentExpiresAt])
   @@map("camp_registrations")
 }
 

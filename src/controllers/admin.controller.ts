@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../config/prisma';
 import { fetchCalEventTypesList } from '../lib/cal';
+import { stripLegacyCampPrice } from '../lib/campSerialization';
 import { buildMeta, parseAdminPagination } from '../lib/pagination';
 import { catchAsync, AppError } from '../middleware/error.middleware';
 import { Prisma } from '@prisma/client';
@@ -115,13 +116,31 @@ export const getUserById = catchAsync(async (req: Request, res: Response) => {
       isEmailVerified: true,
       createdAt: true,
       purchases: { include: { program: { select: { title: true, price: true } } } },
-      campRegistrations: { include: { camp: { select: { title: true, startDate: true } } } },
+      campRegistrations: {
+        include: {
+          camp: { select: { title: true, startDate: true, thumbnail: true, price: true } },
+          tier: { select: { id: true, label: true, price: true, seatsPerUnit: true } },
+          payment: {
+            select: { status: true, amount: true, createdAt: true, paystackRef: true },
+          },
+        },
+      },
       consultations: { include: { service: { select: { title: true } } } },
       payments: { orderBy: { createdAt: 'desc' } },
     },
   });
 
-  res.json({ success: true, message: 'User detail fetched.', data: user });
+  const data = user
+    ? {
+        ...user,
+        campRegistrations: user.campRegistrations.map((r) => ({
+          ...r,
+          camp: stripLegacyCampPrice(r.camp),
+        })),
+      }
+    : user;
+
+  res.json({ success: true, message: 'User detail fetched.', data });
 });
 
 // ── Cal.com event types (admin picker) ────────────────────────────────────────

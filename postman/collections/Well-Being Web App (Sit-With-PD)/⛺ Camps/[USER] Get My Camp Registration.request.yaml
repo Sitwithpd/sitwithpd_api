@@ -1,0 +1,19 @@
+$kind: http-request
+name: "[USER] Get My Camp Registration"
+description: >-
+  Returns the logged-in user's registration row for this camp (including
+  `status`, `paymentExpiresAt`, `tier`, `payment`), or `data: null` with HTTP 200
+  when no row exists yet (same shape as register payload).
+
+  Use this before showing Apply vs “Complete payment” vs Confirmed — avoids
+  guessing from dashboard-only state.
+
+  Lifecycle alignment with POST `/:id/register`: after first register,
+  `status` is `PENDING_PAYMENT` and `paymentExpiresAt` is ~60 minutes ahead.
+  Errors from register are documented on that request (resume payment,
+  already confirmed, expired row reuse after worker runs, etc.).
+url: "{{baseUrl}}/api/camps/{{campId}}/my-registration"
+method: GET
+headers:
+  Authorization: Bearer {{authToken}}
+order: 3100

@@ -1,10 +1,18 @@
 import { Request, Response } from 'express';
-import { Prisma, CampStatus } from '@prisma/client';
+import { Prisma, CampStatus, CampRegistrationStatus } from '@prisma/client';
 import prisma from '../config/prisma';
 import { stripLegacyCampPrice } from '../lib/campSerialization';
 import { buildMeta, parseAdminPagination } from '../lib/pagination';
 import { catchAsync, AppError } from '../middleware/error.middleware';
 import { AuthRequest, ApplicantDetails } from '../types';
+import {
+  computePaymentExpiresAt,
+  getSeatsTaken,
+  isRegistrationActiveHold,
+  canReuseRegistrationRow,
+  whereCountsTowardCampInventory,
+  whereCountsTowardTierInventory,
+} from '../services/campInventory.service';
 
 // ─────────────────────────────────────────────
 // SHARED INCLUDES
@@ -20,20 +28,6 @@ const publicCampInclude = {
   },
   _count: { select: { registrations: true } },
 };
-
-// Helper: how many seats have already been claimed for a camp.
-async function getSeatsTaken(campId: string): Promise<number> {
-  const agg = await prisma.campRegistration.aggregate({
-    where: { campId },
-    _sum: { participantCount: true },
-  });
-  return agg._sum.participantCount ?? 0;
-}
-
-// Helper: count existing units sold of a specific tier.
-async function getTierUnitsSold(tierId: string): Promise<number> {
-  return prisma.campRegistration.count({ where: { tierId } });
-}
 
 const ADMIN_CAMP_SEARCH_MAX_LEN = 100;
 
@@ -125,11 +119,14 @@ export const getAllCamps = catchAsync(async (_req: Request, res: Response) => {
   });
 
   const withSeats = await Promise.all(
-    camps.map(async (camp) => ({
-      ...stripLegacyCampPrice(camp),
-      seatsTaken: await getSeatsTaken(camp.id),
-      seatsRemaining: Math.max(camp.capacity - (await getSeatsTaken(camp.id)), 0),
-    }))
+    camps.map(async (camp) => {
+      const seatsTaken = await getSeatsTaken(camp.id);
+      return {
+        ...stripLegacyCampPrice(camp),
+        seatsTaken,
+        seatsRemaining: Math.max(camp.capacity - seatsTaken, 0),
+      };
+    })
   );
 
   res.json({ success: true, message: 'Camps fetched.', data: withSeats });
@@ -187,8 +184,19 @@ export const getCampById = catchAsync(async (req: Request, res: Response) => {
 // USER ROUTES
 // ─────────────────────────────────────────────
 
-// POST /api/camps/:id/register — Submit camp application (requires at least one tier on the camp; payment handled separately)
+// POST /api/camps/:id/register — Submit a camp application.
 // Body: { tierId: string, applicantDetails?: ApplicantDetails }
+//
+// Lifecycle (Phase 4):
+//   - The whole flow runs in a single $transaction with a row-level lock on the
+//     camp ("SELECT … FOR UPDATE") so concurrent registrations on the same camp
+//     are serialized and capacity / tier-cap math sees a consistent snapshot.
+//   - A new row is created with status=PENDING_PAYMENT and a 60-minute hold
+//     (paymentExpiresAt). After expiry the row is reusable: a retry resets the
+//     same row instead of inserting a new one (keeps @@unique([userId, campId])).
+//   - Existing-row dispatch covers: already CONFIRMED, post-expiry SUCCESS
+//     payment (refund pending → admin), still-active hold (resume payment), and
+//     reusable rows (EXPIRED / CANCELLED / PENDING_PAYMENT past deadline).
 export const registerForCamp = catchAsync(async (req: AuthRequest, res: Response) => {
   const userId = req.user!.id;
   const campId = req.params.id;
@@ -197,77 +205,201 @@ export const registerForCamp = catchAsync(async (req: AuthRequest, res: Response
     applicantDetails?: ApplicantDetails;
   };
 
-  const camp = await prisma.camp.findUnique({
-    where: { id: campId },
-    include: { tiers: true },
-  });
-  if (!camp) throw new AppError('Camp not found.', 404);
-  if (camp.status !== 'UPCOMING') {
-    throw new AppError('This camp is no longer accepting applications.', 400);
-  }
+  const registration = await prisma.$transaction(async (tx) => {
+    // 1. Lock the camp row to serialize concurrent registrations on this camp.
+    //    Held until the transaction commits / rolls back. Other camps are unaffected.
+    await tx.$queryRaw`SELECT id FROM "camps" WHERE id = ${campId} FOR UPDATE`;
 
-  if (camp.tiers.length === 0) {
-    throw new AppError(
-      'This camp has no participation tiers configured. Add tiers before opening registration.',
-      400
-    );
-  }
-
-  if (!tierId) throw new AppError('Please select a participation tier.', 400);
-  const tier = camp.tiers.find((t) => t.id === tierId) ?? null;
-  if (!tier) throw new AppError('Invalid tier selected.', 400);
-
-  const participantCount = tier.seatsPerUnit;
-
-  if (tier.maxUnits != null) {
-    const sold = await getTierUnitsSold(tier.id);
-    if (sold >= tier.maxUnits) {
-      throw new AppError(`The "${tier.label}" package is sold out.`, 400);
+    // 2. Re-load camp + tiers from the locked snapshot.
+    const camp = await tx.camp.findUnique({
+      where: { id: campId },
+      include: { tiers: true },
+    });
+    if (!camp) throw new AppError('Camp not found.', 404);
+    if (camp.status !== 'UPCOMING') {
+      throw new AppError('This camp is no longer accepting applications.', 400);
     }
-  }
-
-  // Seat-based capacity check (sums participantCount across all registrations)
-  const seatsTaken = await getSeatsTaken(campId);
-  if (seatsTaken + participantCount > camp.capacity) {
-    throw new AppError('Not enough spots remaining for this selection.', 400);
-  }
-
-  const existing = await prisma.campRegistration.findUnique({
-    where: { userId_campId: { userId, campId } },
-  });
-  if (existing) throw new AppError('You have already applied for this camp.', 400);
-
-  // Validate applicantDetails party size matches the tier (e.g. Family of 4 needs 3 party members)
-  if (participantCount > 1) {
-    const partySize = applicantDetails?.partyMembers?.length ?? 0;
-    if (partySize < participantCount - 1) {
+    if (camp.tiers.length === 0) {
       throw new AppError(
-        `The "${tier.label}" package covers ${participantCount} people. Please list ${
-          participantCount - 1
-        } additional party member(s).`,
+        'This camp has no participation tiers configured. Add tiers before opening registration.',
         400
       );
     }
-  }
 
-  const registration = await prisma.campRegistration.create({
-    data: {
-      userId,
-      campId,
-      tierId: tier.id,
-      participantCount,
-      applicantDetails: (applicantDetails ?? Prisma.JsonNull) as Prisma.InputJsonValue,
-    },
-    include: { camp: true, tier: true },
+    // 3. Validate tier selection.
+    if (!tierId) throw new AppError('Please select a participation tier.', 400);
+    const tier = camp.tiers.find((t) => t.id === tierId) ?? null;
+    if (!tier) throw new AppError('Invalid tier selected.', 400);
+
+    const participantCount = tier.seatsPerUnit;
+
+    // 4. Validate party size for multi-seat tiers (e.g. Couple needs 1 party member).
+    if (participantCount > 1) {
+      const partySize = applicantDetails?.partyMembers?.length ?? 0;
+      if (partySize < participantCount - 1) {
+        throw new AppError(
+          `The "${tier.label}" package covers ${participantCount} people. Please list ${
+            participantCount - 1
+          } additional party member(s).`,
+          400
+        );
+      }
+    }
+
+    const now = new Date();
+    const paymentExpiresAt = computePaymentExpiresAt(now);
+
+    // 5. Tier cap (only applies when maxUnits is configured on the tier).
+    if (tier.maxUnits != null) {
+      const heldUnits = await tx.campRegistration.count({
+        where: whereCountsTowardTierInventory(tier.id, now),
+      });
+      if (heldUnits >= tier.maxUnits) {
+        throw new AppError(`The "${tier.label}" package is sold out.`, 400);
+      }
+    }
+
+    // 6. Camp seat capacity (sums participantCount across CONFIRMED + active holds).
+    const seatsAgg = await tx.campRegistration.aggregate({
+      where: whereCountsTowardCampInventory(campId, now),
+      _sum: { participantCount: true },
+    });
+    const seatsTaken = seatsAgg._sum.participantCount ?? 0;
+    if (seatsTaken + participantCount > camp.capacity) {
+      throw new AppError('Not enough spots remaining for this selection.', 400);
+    }
+
+    // 7. Existing-row dispatch (at most one row per (userId, campId) due to @@unique).
+    const existing = await tx.campRegistration.findUnique({
+      where: { userId_campId: { userId, campId } },
+      include: { payment: true },
+    });
+
+    if (existing) {
+      // (a) Already paid — block silently.
+      if (existing.status === CampRegistrationStatus.CONFIRMED) {
+        throw new AppError('You have already applied for this camp.', 400);
+      }
+
+      // (b) Defensive: a SUCCESS payment exists but the registration is not
+      //     CONFIRMED. This is the post-expiry-payment / pending-refund state
+      //     and needs admin review before the user re-applies.
+      if (existing.payment?.status === 'SUCCESS') {
+        throw new AppError(
+          'A previous payment is pending review. Please contact support before re-applying.',
+          400
+        );
+      }
+
+      // (c) Still-active hold — guide user to complete the existing checkout.
+      if (isRegistrationActiveHold(existing, now)) {
+        throw new AppError(
+          'You have a pending application for this camp. Complete payment for it or wait for it to expire before re-applying.',
+          400
+        );
+      }
+
+      // (d) Reusable row: EXPIRED, CANCELLED, or PENDING_PAYMENT past deadline.
+      if (canReuseRegistrationRow(existing, now)) {
+        // Detach any prior payment so Phase 5 can attach a fresh one to this
+        // registration (Payment.campRegistrationId is @unique). PENDING is also
+        // promoted to FAILED so it doesn't sit pending forever.
+        if (existing.payment) {
+          await tx.payment.update({
+            where: { id: existing.payment.id },
+            data: {
+              campRegistrationId: null,
+              ...(existing.payment.status === 'PENDING' ? { status: 'FAILED' as const } : {}),
+            },
+          });
+        }
+
+        const reset = await tx.campRegistration.update({
+          where: { id: existing.id },
+          data: {
+            tierId: tier.id,
+            participantCount,
+            applicantDetails: (applicantDetails ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+            status: CampRegistrationStatus.PENDING_PAYMENT,
+            paymentExpiresAt,
+          },
+          include: { camp: true, tier: true },
+        });
+
+        return reset;
+      }
+
+      // Defensive: should be unreachable — every enum value is handled above.
+      throw new AppError(
+        'Registration is in an unexpected state. Please contact support.',
+        500
+      );
+    }
+
+    // 8. No existing row — create a fresh PENDING_PAYMENT hold.
+    const created = await tx.campRegistration.create({
+      data: {
+        userId,
+        campId,
+        tierId: tier.id,
+        participantCount,
+        applicantDetails: (applicantDetails ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+        status: CampRegistrationStatus.PENDING_PAYMENT,
+        paymentExpiresAt,
+      },
+      include: { camp: true, tier: true },
+    });
+
+    return created;
   });
 
   res.status(201).json({
     success: true,
-    message: 'Application submitted. Please complete payment.',
+    message: 'Application submitted. Please complete payment within 60 minutes.',
     data: {
       ...registration,
       camp: stripLegacyCampPrice(registration.camp),
     },
+  });
+});
+
+// GET /api/camps/:id/my-registration — Caller's own registration state for this camp.
+//
+// Pure read; never mutates. Used by the frontend to decide what to show on the
+// camp page (apply button vs. "Complete Payment" countdown vs. "Confirmed" vs.
+// "Expired — re-apply"). Returns `data: null` with 200 if the user has no row
+// for this camp, so the client has a single response shape to handle.
+export const getMyCampRegistration = catchAsync(async (req: AuthRequest, res: Response) => {
+  const userId = req.user!.id;
+  const { id: campId } = req.params;
+
+  const registration = await prisma.campRegistration.findUnique({
+    where: { userId_campId: { userId, campId } },
+    select: {
+      id: true,
+      campId: true,
+      tierId: true,
+      participantCount: true,
+      applicantDetails: true,
+      status: true,
+      paymentExpiresAt: true,
+      createdAt: true,
+      updatedAt: true,
+      camp: true,
+      tier: { select: { id: true, label: true, price: true, seatsPerUnit: true } },
+      payment: { select: { status: true, amount: true, createdAt: true } },
+    },
+  });
+
+  if (!registration) {
+    res.json({ success: true, message: 'No registration found.', data: null });
+    return;
+  }
+
+  res.json({
+    success: true,
+    message: 'Registration fetched.',
+    data: { ...registration, camp: stripLegacyCampPrice(registration.camp) },
   });
 });
 
@@ -346,15 +478,46 @@ export const deleteCamp = catchAsync(async (req: Request, res: Response) => {
 });
 
 // GET /api/camps/:id/participants — View who applied (admin)
+//
+// Returns every registration row (PENDING_PAYMENT, CONFIRMED, EXPIRED,
+// CANCELLED) so the admin UI can render status badges. Pass an optional
+// `?status=` query param to scope the list to a single lifecycle state.
 export const getCampParticipants = catchAsync(async (req: Request, res: Response) => {
   const { skip, page, limit } = parseAdminPagination(req);
   const { id: campId } = req.params;
-  const where = { campId };
+
+  const rawStatus = req.query.status;
+  let statusFilter: CampRegistrationStatus | undefined;
+  if (rawStatus !== undefined && String(rawStatus).trim() !== '') {
+    const s = String(rawStatus).trim().toUpperCase();
+    if (!Object.values(CampRegistrationStatus).includes(s as CampRegistrationStatus)) {
+      throw new AppError(
+        `Invalid status. Use one of: ${Object.values(CampRegistrationStatus).join(', ')}.`,
+        400
+      );
+    }
+    statusFilter = s as CampRegistrationStatus;
+  }
+
+  const where: Prisma.CampRegistrationWhereInput = {
+    campId,
+    ...(statusFilter ? { status: statusFilter } : {}),
+  };
 
   const [registrations, total] = await Promise.all([
     prisma.campRegistration.findMany({
       where,
-      include: {
+      select: {
+        id: true,
+        userId: true,
+        campId: true,
+        tierId: true,
+        participantCount: true,
+        applicantDetails: true,
+        status: true,
+        paymentExpiresAt: true,
+        createdAt: true,
+        updatedAt: true,
         user: { select: { id: true, firstName: true, lastName: true, email: true } },
         tier: { select: { id: true, label: true, price: true, seatsPerUnit: true } },
         payment: { select: { status: true, amount: true, createdAt: true } },

@@ -26,11 +26,25 @@ export const getDashboard = catchAsync(async (req: AuthRequest, res: Response) =
       orderBy: { createdAt: 'desc' },
     }),
 
+    // Explicit select so `status` and `paymentExpiresAt` are part of the
+    // documented dashboard contract (frontend renders "Complete Payment" CTA
+    // with a countdown when status === PENDING_PAYMENT and paymentExpiresAt
+    // is in the future).
     prisma.campRegistration.findMany({
       where: { userId },
-      include: {
+      select: {
+        id: true,
+        userId: true,
+        campId: true,
+        tierId: true,
+        participantCount: true,
+        applicantDetails: true,
+        status: true,
+        paymentExpiresAt: true,
+        createdAt: true,
+        updatedAt: true,
         camp: true,
-        payment: { select: { status: true, amount: true } },
+        payment: { select: { status: true, amount: true, createdAt: true } },
       },
       orderBy: { createdAt: 'desc' },
     }),

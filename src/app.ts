@@ -19,6 +19,7 @@ import { errorHandler } from './middleware/error.middleware';
 import { calWebhook } from './controllers/consultation.cal.controller';
 import { paystackWebhook } from './controllers/payment.controller';
 import { processExpiredConsultationPayments } from './services/consultationExpiry.service';
+import { processExpiredCampRegistrations } from './services/campRegistrationExpiry.service';
 import { processCampStatusTransitions } from './services/campStatus.service';
 
 const app = express();
@@ -91,6 +92,20 @@ app.post('/api/internal/cron/consultation-payment-expiry', async (req, res, next
   }
   try {
     const processed = await processExpiredConsultationPayments();
+    return res.json({ success: true, processed });
+  } catch (e) {
+    next(e);
+  }
+});
+
+app.post('/api/internal/cron/camp-registration-expiry', async (req, res, next) => {
+  const secret = process.env.CRON_SECRET;
+  const auth = req.headers.authorization;
+  if (!secret || auth !== `Bearer ${secret}`) {
+    return res.status(401).json({ success: false, message: 'Unauthorized.' });
+  }
+  try {
+    const processed = await processExpiredCampRegistrations();
     return res.json({ success: true, processed });
   } catch (e) {
     next(e);

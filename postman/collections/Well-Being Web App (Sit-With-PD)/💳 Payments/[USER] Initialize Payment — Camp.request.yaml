@@ -1,6 +1,28 @@
 $kind: http-request
 name: "[USER] Initialize Payment — Camp"
-description: Initializes a Paystack payment for a camp application. itemId must be the camp registration ID (not camp ID). The charged amount comes from the registration's selected tier price.
+description: >-
+  Initializes Paystack for a camp application. `itemId` must be the **camp
+  registration id** (from POST `/api/camps/:id/register` or GET
+  `/api/camps/:id/my-registration`). Amount comes only from the tier linked to
+  that registration.
+
+  Allowed only while `isRegistrationPayable` / registration lifecycle permits
+  checkout (`PENDING_PAYMENT` with a future `paymentExpiresAt`).
+
+  **400 rejection cases:**
+
+  - **Already paid:** `You have already paid for this application.`
+    (`status === CONFIRMED`, or a defensive hit when a linked payment is already
+    `SUCCESS`)
+
+  - **Hold expired / wrong lifecycle:** `This application has expired. Please
+    re-apply to obtain a new payment window.` (`EXPIRED`, `CANCELLED`,
+  `PENDING_PAYMENT` past `paymentExpiresAt`, etc.)
+
+  A fresh initialize creates a new `Payment` row with `campRegistrationId` set.
+  Retrying initialize while an older **PENDING** session exists detaches that
+  payment (FAILED + null FK) so the unique constraint stays satisfied.
+
 url: "{{baseUrl}}/api/payments/initialize"
 method: POST
 headers:

@@ -1,10 +1,37 @@
 $kind: http-request
 description: >-
-  Submits a camp application for the logged-in user. `tierId` is required — the
-  camp must have at least one tier configured. Include `applicantDetails`
-  (dietary info, emergency contact, partyMembers for Couple/Family, etc.). After
-  success, initialize payment with `campRegistrationId`; Paystack amount uses the
-  selected tier price.
+  Submits or refreshes a camp application for the logged-in user. `tierId` is
+  required — the camp must have at least one tier configured. Include
+  `applicantDetails` (dietary info, emergency contact, partyMembers for
+  Couple/Family, etc.).
+
+  Success response (201): `data` includes the registration `id`, `status`
+  (`PENDING_PAYMENT`), `paymentExpiresAt` (ISO timestamp — complete Paystack
+  within ~60 minutes), `tier`, `camp`, `participantCount`, `applicantDetails`.
+  Message text:
+
+  `Application submitted. Please complete payment within 60 minutes.`
+
+  Next step: POST `/api/payments/initialize` with `type: "CAMP"` and
+  `itemId` = registration `id`.
+
+  Error messages you may see when re-posting:
+
+  - **Already confirmed:** `You have already applied for this camp.` (repeat
+    attempt while `status` is `CONFIRMED`)
+
+  - **Resume payment:** `You have a pending application for this camp. Complete
+    payment for it or wait for it to expire before re-applying.` (hold still
+    active — use initialize payment or wait for expiry)
+
+  - **Late webhook / refund queue:** `A previous payment is pending review.
+    Please contact support before re-applying.` (linked payment `SUCCESS` but
+    registration not confirmed — ops must refund before retry)
+
+  After the expiry worker marks the row `EXPIRED`, posting again **reuses**
+  the same registration row (same `id`), resets `status` to `PENDING_PAYMENT`,
+  and issues a fresh `paymentExpiresAt`.
+
 url: "{{baseUrl}}/api/camps/{{campId}}/register"
 method: POST
 headers:

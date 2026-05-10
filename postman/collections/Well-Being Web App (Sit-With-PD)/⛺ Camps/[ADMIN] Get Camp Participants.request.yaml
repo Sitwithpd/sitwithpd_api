@@ -1,6 +1,14 @@
 $kind: http-request
-description: Admin only. Returns applicants for a camp with tier, payment
-  status, participantCount, and applicantDetails.
+description: >-
+  Admin only. Paginated `{ data, meta }`. Each row includes registration
+  lifecycle fields (`status`, `paymentExpiresAt`) plus user, tier,
+  applicantDetails, and linked payment summary — use `status` for admin badges
+  (`PENDING_PAYMENT`, `CONFIRMED`, `EXPIRED`, `CANCELLED`).
+
+  By default **all** statuses are returned (not only confirmed attendees).
+  Optional query: `?status=PENDING_PAYMENT` (or `CONFIRMED`, `EXPIRED`,
+  `CANCELLED`) to filter one state.
+
 url: "{{baseUrl}}/api/camps/{{campId}}/participants"
 method: GET
 headers:

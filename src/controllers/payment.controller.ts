@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import crypto from 'crypto';
+import { CampRegistrationStatus } from '@prisma/client';
 import prisma from '../config/prisma';
 import { buildMeta, parseAdminPagination } from '../lib/pagination';
 import { catchAsync, AppError } from '../middleware/error.middleware';
@@ -9,6 +10,7 @@ import {
   sendCampRegistrationEmail,
   sendConsultationBookingEmail,
 } from '../utils/email.service';
+import { isRegistrationPayable } from '../services/campInventory.service';
 
 const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY!;
 const PAYSTACK_BASE = 'https://api.paystack.co';
@@ -57,7 +59,7 @@ export const initializePayment = catchAsync(async (req: AuthRequest, res: Respon
   } else if (type === 'CAMP') {
     const registration = await prisma.campRegistration.findUnique({
       where: { id: itemId },
-      include: { camp: true, tier: true },
+      include: { camp: true, tier: true, payment: true },
     });
     if (!registration) throw new AppError('Camp registration not found.', 404);
     if (registration.userId !== userId) throw new AppError('Unauthorized.', 403);
@@ -68,6 +70,38 @@ export const initializePayment = catchAsync(async (req: AuthRequest, res: Respon
         400
       );
     }
+
+    // Lifecycle gate (Phase 5): refuse to start a Paystack session for any
+    // registration that is not currently payable. This catches CONFIRMED,
+    // EXPIRED, CANCELLED, and PENDING_PAYMENT past the 60-minute deadline.
+    if (registration.status === CampRegistrationStatus.CONFIRMED) {
+      throw new AppError('You have already paid for this application.', 400);
+    }
+    if (!isRegistrationPayable(registration)) {
+      throw new AppError(
+        'This application has expired. Please re-apply to obtain a new payment window.',
+        400
+      );
+    }
+
+    // Stale-payment cleanup: free the Payment.campRegistrationId @unique slot so
+    // the new Payment row created below can attach. Mirrors the cleanup performed
+    // by camp.controller.ts on the reset path; this branch additionally handles
+    // the double-click case where a user clicks "Pay" twice on the same active
+    // registration before the first session is finalised.
+    if (registration.payment) {
+      if (registration.payment.status === 'SUCCESS') {
+        throw new AppError('You have already paid for this application.', 400);
+      }
+      await prisma.payment.update({
+        where: { id: registration.payment.id },
+        data: {
+          campRegistrationId: null,
+          ...(registration.payment.status === 'PENDING' ? { status: 'FAILED' as const } : {}),
+        },
+      });
+    }
+
     amount = registration.tier.price;
     description = `Camp Application: ${registration.camp.title} — ${registration.tier.label}`;
 
@@ -173,13 +207,73 @@ export const paystackWebhook = async (req: Request, res: Response) => {
         where: { id: itemId },
         include: { camp: true },
       });
-      if (registration) {
-        await sendCampRegistrationEmail(
-          user.email,
-          user.firstName,
-          registration.camp.title,
-          registration.camp.startDate
+
+      if (!registration) {
+        console.warn(
+          `[paystack-webhook] CAMP charge.success: registration ${itemId} not found.`
         );
+      } else if (registration.userId !== userId) {
+        console.warn(
+          `[paystack-webhook] CAMP charge.success: registration ${itemId} userId mismatch ` +
+            `(reg=${registration.userId}, metadata=${userId}).`
+        );
+      } else if (registration.status === CampRegistrationStatus.CONFIRMED) {
+        // Idempotent: already promoted, almost certainly a webhook retry.
+      } else {
+        // Time-of-truth for the payability check is when Paystack actually
+        // charged the card, not when the webhook reached us. This is fairer
+        // when delivery is delayed past the 60-minute hold but the charge
+        // itself happened in time. Falls back to receipt time if absent.
+        const paidAtRaw = (event.data as Record<string, unknown>).paid_at;
+        const eventTime =
+          typeof paidAtRaw === 'string' ? new Date(paidAtRaw) : new Date();
+
+        if (isRegistrationPayable(registration, eventTime)) {
+          // Atomic, race-safe promotion: only the call that finds the row in
+          // PENDING_PAYMENT will flip it. Concurrent webhook deliveries see
+          // count === 0 and skip the email.
+          const promoted = await prisma.campRegistration.updateMany({
+            where: { id: registration.id, status: CampRegistrationStatus.PENDING_PAYMENT },
+            data: { status: CampRegistrationStatus.CONFIRMED, paymentExpiresAt: null },
+          });
+          if (promoted.count === 1) {
+            await sendCampRegistrationEmail(
+              user.email,
+              user.firstName,
+              registration.camp.title,
+              registration.camp.startDate
+            );
+          }
+        } else {
+          // Charge succeeded after the registration's hold elapsed. Money was
+          // taken — flag for a manual refund and DO NOT confirm the seat.
+          // Two channels until a Payment.refundRequired column exists:
+          //   1. Marker inside Payment.paystackResponse for admin queries.
+          //   2. Structured console.error for Render log alerting.
+          await prisma.payment.update({
+            where: { id: payment.id },
+            data: {
+              paystackResponse: {
+                ...(event.data as object),
+                _refundRequired: true,
+                _refundReason:
+                  'Registration expired before charge.success arrived.',
+              } as object,
+            },
+          });
+          console.error(
+            '[paystack-webhook] CAMP refund-required: charge.success arrived for non-payable registration.',
+            JSON.stringify({
+              paymentId: payment.id,
+              paystackRef: reference,
+              registrationId: registration.id,
+              userId,
+              registrationStatus: registration.status,
+              registrationExpiresAt: registration.paymentExpiresAt,
+              eventTime: eventTime.toISOString(),
+            })
+          );
+        }
       }
 
     } else if (type === 'CONSULTATION') {
