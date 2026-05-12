@@ -32,6 +32,40 @@ function optionalString(v: unknown): string | null | undefined {
   return String(v);
 }
 
+const PROGRAM_START_DATE_HINT =
+  'Use ISO 8601 (e.g. 2026-05-01T00:00:00.000Z). Omit the field if there is no start date.';
+
+/** Optional start date on create — skips undefined/null/''; rejects invalid values. */
+function parseOptionalProgramStartDateForCreate(value: unknown): Date | undefined {
+  if (value === undefined || value === null || value === '') return undefined;
+  const d = value instanceof Date ? value : new Date(String(value));
+  if (Number.isNaN(d.getTime())) {
+    throw new AppError(`startDate is invalid. ${PROGRAM_START_DATE_HINT}`, 400);
+  }
+  return d;
+}
+
+/**
+ * PATCH startDate semantics:
+ * - omitted (`undefined`) → do not change the stored value
+ * - `null` → clear `startDate` in the database
+ * - `''` → leave unchanged (same as omit; avoids accidental clears from empty form fields)
+ * - otherwise → must be a valid date
+ */
+function resolveProgramStartDatePatch(raw: unknown): { apply: boolean; value?: Date | null } {
+  if (raw === undefined) return { apply: false };
+  if (raw === null) return { apply: true, value: null };
+  if (raw === '') return { apply: false };
+  const d = raw instanceof Date ? raw : new Date(String(raw));
+  if (Number.isNaN(d.getTime())) {
+    throw new AppError(
+      `startDate is invalid. Omit it to keep the current value, send null to clear it, or ${PROGRAM_START_DATE_HINT}`,
+      400
+    );
+  }
+  return { apply: true, value: d };
+}
+
 /**
  * Accepts an array, a JSON string of an array, newline- or semicolon-separated
  * text, or a single string — and always returns a plain string[].
@@ -316,6 +350,8 @@ export const createProgram = catchAsync(async (req: Request, res: Response) => {
     }
   }
 
+  const optionalStartDate = parseOptionalProgramStartDateForCreate(startDate);
+
   const program = await prisma.program.create({
     data: {
       title,
@@ -339,7 +375,9 @@ export const createProgram = catchAsync(async (req: Request, res: Response) => {
       ...(parseOptionalFloat(hoursPerWeek, 'hoursPerWeek') !== undefined && {
         hoursPerWeek: parseOptionalFloat(hoursPerWeek, 'hoursPerWeek'),
       }),
-      ...(startDate && startDate !== '' && { startDate: new Date(String(startDate)) }),
+      ...(optionalStartDate !== undefined && {
+        startDate: optionalStartDate,
+      }),
 
       // Nested create for weeks + modules if provided in the same request
       weeks: weeks.length
@@ -401,6 +439,8 @@ export const updateProgram = catchAsync(async (req: Request, res: Response) => {
 
   const loRaw = req.body.learningOutcomes ?? req.body.learning_outcomes;
 
+  const startDatePatch = resolveProgramStartDatePatch(startDate);
+
   const data: Prisma.ProgramUpdateInput = {
     ...(title && { title }),
     ...(description && { description }),
@@ -427,24 +467,30 @@ export const updateProgram = catchAsync(async (req: Request, res: Response) => {
     ...(facilitatorEmail !== undefined && {
       facilitatorEmail: optionalString(facilitatorEmail),
     }),
-    ...(startDate !== undefined && startDate !== '' && {
-      startDate: new Date(String(startDate)),
-    }),
+    ...(startDatePatch.apply && { startDate: startDatePatch.value }),
     ...(loRaw !== undefined && {
       learningOutcomes: { set: parseStringArray(loRaw) },
     }),
   };
 
-  const program = await prisma.program.update({
-    where: { id },
-    data,
-    include: {
-      weeks: {
-        orderBy: { order: 'asc' },
-        include: { modules: { orderBy: { order: 'asc' } } },
+  let program;
+  try {
+    program = await prisma.program.update({
+      where: { id },
+      data,
+      include: {
+        weeks: {
+          orderBy: { order: 'asc' },
+          include: { modules: { orderBy: { order: 'asc' } } },
+        },
       },
-    },
-  });
+    });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2025') {
+      throw new AppError('Program not found.', 404);
+    }
+    throw e;
+  }
 
   res.json({ success: true, message: 'Program updated.', data: program });
 });
