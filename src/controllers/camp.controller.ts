@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { Prisma, CampStatus, CampRegistrationStatus } from '@prisma/client';
 import prisma from '../config/prisma';
 import { stripLegacyCampPrice } from '../lib/campSerialization';
+import { mapForeignKeyDeleteError } from '../lib/prismaDeleteErrors';
 import { buildMeta, parseAdminPagination } from '../lib/pagination';
 import { catchAsync, AppError } from '../middleware/error.middleware';
 import { AuthRequest, ApplicantDetails } from '../types';
@@ -473,7 +474,16 @@ export const updateCamp = catchAsync(async (req: AuthRequest, res: Response) => 
 // Payments on camp registrations retain rows with campRegistrationId nulled (FK SET NULL).
 // Testimonials tied to this camp: campId → null (already onDelete SetNull).
 export const deleteCamp = catchAsync(async (req: Request, res: Response) => {
-  await prisma.camp.delete({ where: { id: req.params.id } });
+  try {
+    await prisma.camp.delete({ where: { id: req.params.id } });
+  } catch (e) {
+    const fk = mapForeignKeyDeleteError(e);
+    if (fk) throw fk;
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2025') {
+      throw new AppError('Camp not found.', 404);
+    }
+    throw e;
+  }
   res.json({ success: true, message: 'Camp deleted.' });
 });
 
@@ -622,7 +632,13 @@ export const deleteCampTier = catchAsync(async (req: Request, res: Response) => 
   const existing = await prisma.campTier.findUnique({ where: { id: tierId } });
   if (!existing || existing.campId !== campId) throw new AppError('Tier not found.', 404);
 
-  await prisma.campTier.delete({ where: { id: tierId } });
+  try {
+    await prisma.campTier.delete({ where: { id: tierId } });
+  } catch (e) {
+    const fk = mapForeignKeyDeleteError(e);
+    if (fk) throw fk;
+    throw e;
+  }
   res.json({ success: true, message: 'Tier deleted.' });
 });
 
@@ -686,7 +702,13 @@ export const deleteCampImage = catchAsync(async (req: Request, res: Response) =>
   const existing = await prisma.campImage.findUnique({ where: { id: imageId } });
   if (!existing || existing.campId !== campId) throw new AppError('Image not found.', 404);
 
-  await prisma.campImage.delete({ where: { id: imageId } });
+  try {
+    await prisma.campImage.delete({ where: { id: imageId } });
+  } catch (e) {
+    const fk = mapForeignKeyDeleteError(e);
+    if (fk) throw fk;
+    throw e;
+  }
   res.json({ success: true, message: 'Image deleted.' });
 });
 

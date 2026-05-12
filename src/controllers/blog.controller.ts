@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { BlogCategory, Prisma } from '@prisma/client';
 import prisma from '../config/prisma';
+import { mapForeignKeyDeleteError } from '../lib/prismaDeleteErrors';
 import {
   buildMeta,
   parseAdminPagination,
@@ -352,6 +353,8 @@ export const deleteBlogPost = catchAsync(async (req: Request, res: Response) => 
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2025') {
       throw new AppError('Blog post not found.', 404);
     }
+    const fk = mapForeignKeyDeleteError(e);
+    if (fk) throw fk;
     throw e;
   }
 

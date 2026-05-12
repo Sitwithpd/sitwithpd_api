@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
+import { Prisma } from '@prisma/client';
 import prisma from '../config/prisma';
+import { mapForeignKeyDeleteError } from '../lib/prismaDeleteErrors';
 import { buildMeta, parseAdminPagination } from '../lib/pagination';
 import { catchAsync, AppError } from '../middleware/error.middleware';
 import { AuthRequest } from '../types';
@@ -116,7 +118,16 @@ export const updateTestimonial = catchAsync(async (req: AuthRequest, res: Respon
 export const deleteTestimonial = catchAsync(async (req: Request, res: Response) => {
   const existing = await prisma.testimonial.findUnique({ where: { id: req.params.id } });
   if (!existing) throw new AppError('Testimonial not found.', 404);
-  await prisma.testimonial.delete({ where: { id: req.params.id } });
+  try {
+    await prisma.testimonial.delete({ where: { id: req.params.id } });
+  } catch (e) {
+    const fk = mapForeignKeyDeleteError(e);
+    if (fk) throw fk;
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2025') {
+      throw new AppError('Testimonial not found.', 404);
+    }
+    throw e;
+  }
   res.json({ success: true, message: 'Testimonial deleted.' });
 });
 

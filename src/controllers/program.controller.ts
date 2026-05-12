@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { ModuleType, ProgramCategory, Prisma } from '@prisma/client';
 import prisma from '../config/prisma';
+import { mapForeignKeyDeleteError } from '../lib/prismaDeleteErrors';
 import { buildMeta, parseAdminPagination } from '../lib/pagination';
 import { catchAsync, AppError } from '../middleware/error.middleware';
 import { AuthRequest } from '../types';
@@ -454,7 +455,16 @@ export const updateProgram = catchAsync(async (req: Request, res: Response) => {
  */
 export const deleteProgram = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
-  await prisma.program.delete({ where: { id } });
+  try {
+    await prisma.program.delete({ where: { id } });
+  } catch (e) {
+    const fk = mapForeignKeyDeleteError(e);
+    if (fk) throw fk;
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2025') {
+      throw new AppError('Program not found.', 404);
+    }
+    throw e;
+  }
   res.json({ success: true, message: 'Program deleted.' });
 });
 
@@ -529,7 +539,16 @@ export const updateWeek = catchAsync(async (req: Request, res: Response) => {
  */
 export const deleteWeek = catchAsync(async (req: Request, res: Response) => {
   const { weekId } = req.params;
-  await prisma.programWeek.delete({ where: { id: weekId } });
+  try {
+    await prisma.programWeek.delete({ where: { id: weekId } });
+  } catch (e) {
+    const fk = mapForeignKeyDeleteError(e);
+    if (fk) throw fk;
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2025') {
+      throw new AppError('Week not found.', 404);
+    }
+    throw e;
+  }
   res.json({ success: true, message: 'Week deleted.' });
 });
 
@@ -638,6 +657,15 @@ export const updateModule = catchAsync(async (req: Request, res: Response) => {
  */
 export const deleteModule = catchAsync(async (req: Request, res: Response) => {
   const { moduleId } = req.params;
-  await prisma.programModule.delete({ where: { id: moduleId } });
+  try {
+    await prisma.programModule.delete({ where: { id: moduleId } });
+  } catch (e) {
+    const fk = mapForeignKeyDeleteError(e);
+    if (fk) throw fk;
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2025') {
+      throw new AppError('Module not found.', 404);
+    }
+    throw e;
+  }
   res.json({ success: true, message: 'Module deleted.' });
 });
