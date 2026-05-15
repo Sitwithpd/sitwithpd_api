@@ -118,6 +118,7 @@ model User {
   consultations     Consultation[]
   payments          Payment[]
   programModuleCompletions ProgramModuleCompletion[]
+  blogPosts         BlogPost[]
 
   @@map("users")
 }
@@ -317,9 +318,13 @@ model BlogPost {
   coverImageUrl   String?
   isPublished     Boolean      @default(false)
   publishedAt     DateTime?
+  authorId        String?
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 
+  author User? @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([authorId])
   @@map("blog_posts")
 }
 

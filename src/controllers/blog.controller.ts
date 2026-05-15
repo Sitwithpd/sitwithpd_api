@@ -70,6 +70,39 @@ function searchWhereForAdmin(term: string): Prisma.BlogPostWhereInput {
   };
 }
 
+const blogAuthorSelect = {
+  id: true,
+  firstName: true,
+  lastName: true,
+} as const;
+
+async function parseAuthorIdForCreate(body: Record<string, unknown>, adminUserId: string): Promise<string | null> {
+  if (!('authorId' in body)) return adminUserId;
+  const raw = body.authorId;
+  if (raw === null || raw === '') return null;
+  if (typeof raw !== 'string' || !raw.trim()) {
+    throw new AppError('authorId must be a user id string, null, or omitted.', 400);
+  }
+  const id = raw.trim();
+  const user = await prisma.user.findUnique({ where: { id }, select: { id: true } });
+  if (!user) throw new AppError('authorId does not match a user.', 400);
+  return id;
+}
+
+/** Returns null to clear, string to set, or undefined if property absent (no DB change). */
+async function parseAuthorIdForUpdate(body: Record<string, unknown>): Promise<string | null | undefined> {
+  if (!('authorId' in body)) return undefined;
+  const raw = body.authorId;
+  if (raw === null || raw === '') return null;
+  if (typeof raw !== 'string' || !raw.trim()) {
+    throw new AppError('authorId must be a non-empty user id string or null.', 400);
+  }
+  const id = raw.trim();
+  const user = await prisma.user.findUnique({ where: { id }, select: { id: true } });
+  if (!user) throw new AppError('authorId does not match a user.', 400);
+  return id;
+}
+
 /**
  * `status` (admin list): all | draft | published
  */
@@ -114,6 +147,9 @@ export const getPublishedBlogPosts = catchAsync(async (req: Request, res: Respon
     coverImageUrl: true,
     publishedAt: true,
     createdAt: true,
+    author: {
+      select: blogAuthorSelect,
+    },
   } as const;
 
   if (pag.mode === 'page') {
@@ -150,6 +186,9 @@ export const getBlogPostBySlug = catchAsync(async (req: Request, res: Response) 
 
   const post = await prisma.blogPost.findFirst({
     where: { slug, isPublished: true },
+    include: {
+      author: { select: blogAuthorSelect },
+    },
   });
 
   if (!post) throw new AppError('Blog post not found.', 404);
@@ -192,6 +231,9 @@ export const adminListBlogPosts = catchAsync(async (req: AuthRequest, res: Respo
       orderBy,
       skip,
       take: limit,
+      include: {
+        author: { select: blogAuthorSelect },
+      },
     }),
   ]);
 
@@ -204,7 +246,12 @@ export const adminListBlogPosts = catchAsync(async (req: AuthRequest, res: Respo
 });
 
 export const getBlogPostByIdAdmin = catchAsync(async (req: AuthRequest, res: Response) => {
-  const post = await prisma.blogPost.findUnique({ where: { id: req.params.id } });
+  const post = await prisma.blogPost.findUnique({
+    where: { id: req.params.id },
+    include: {
+      author: { select: blogAuthorSelect },
+    },
+  });
   if (!post) throw new AppError('Blog post not found.', 404);
 
   res.json({ success: true, message: 'Blog post retrieved.', data: post });
@@ -241,6 +288,11 @@ export const createBlogPost = catchAsync(async (req: AuthRequest, res: Response)
   const published = parseBoolean(isPublished);
   const now = new Date();
 
+  const adminId = req.user?.id;
+  if (!adminId) throw new AppError('Unauthorized.', 401);
+
+  const authorId = await parseAuthorIdForCreate(req.body as Record<string, unknown>, adminId);
+
   try {
     const post = await prisma.blogPost.create({
       data: {
@@ -253,6 +305,10 @@ export const createBlogPost = catchAsync(async (req: AuthRequest, res: Response)
         coverImageUrl: coverImage,
         isPublished: published,
         publishedAt: published ? now : null,
+        authorId,
+      },
+      include: {
+        author: { select: blogAuthorSelect },
       },
     });
     res.status(201).json({ success: true, message: 'Blog post created.', data: post });
@@ -326,14 +382,26 @@ export const updateBlogPost = catchAsync(async (req: AuthRequest, res: Response)
     data.coverImageUrl = nextCover;
   }
 
+  const nextAuthorId = await parseAuthorIdForUpdate(req.body as Record<string, unknown>);
+  if (nextAuthorId !== undefined) {
+    data.author =
+      nextAuthorId === null ? { disconnect: true } : { connect: { id: nextAuthorId } };
+  }
+
   if (Object.keys(data).length === 0) {
-    throw new AppError('No fields to update. Send at least one of title, excerpt, body, slug, category, readTimeMinutes, isPublished, coverImage, coverImageUrl.', 400);
+    throw new AppError(
+      'No fields to update. Send at least one of title, excerpt, body, slug, category, readTimeMinutes, isPublished, authorId, coverImage, coverImageUrl.',
+      400
+    );
   }
 
   try {
     const post = await prisma.blogPost.update({
       where: { id },
       data,
+      include: {
+        author: { select: blogAuthorSelect },
+      },
     });
     res.json({ success: true, message: 'Blog post updated.', data: post });
   } catch (e) {
