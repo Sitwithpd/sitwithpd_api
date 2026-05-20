@@ -230,6 +230,65 @@ export const sendDashboardSupportRequestEmail = async (params: {
   });
 };
 
+/** Public Contact Us form → platform support inbox. */
+export const sendContactFormEmail = async (params: {
+  to: string;
+  fullName: string;
+  email: string;
+  phone: string | null;
+  message: string;
+  submissionId: string;
+}) => {
+  const { to, fullName, email, phone, message, submissionId } = params;
+  const safeMessage = escapeHtml(message);
+  const phoneLine = phone
+    ? `<p><strong>Phone:</strong> ${escapeHtml(phone)}</p>`
+    : '<p><strong>Phone:</strong> <em>Not provided</em></p>';
+
+  await sendMail({
+    from: transactionalFrom(),
+    to,
+    replyTo: email,
+    subject: `Contact form: ${fullName}`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px;">
+        <p><strong>New message</strong> from the website Contact Us form.</p>
+        <p><strong>Submission ID:</strong> ${escapeHtml(submissionId)}</p>
+        <p><strong>Name:</strong> ${escapeHtml(fullName)}</p>
+        <p><strong>Email:</strong> ${escapeHtml(email)}</p>
+        ${phoneLine}
+        <hr style="border:none;border-top:1px solid #eee;margin:16px 0;" />
+        <div style="white-space:pre-wrap;">${safeMessage}</div>
+        ${emailBrandSignOff()}
+      </div>
+    `,
+  });
+};
+
+/** Optional acknowledgement to the visitor after Contact Us submit. */
+export const sendContactFormAutoReplyEmail = async (params: {
+  to: string;
+  fullName: string;
+}) => {
+  const { to, fullName } = params;
+  const brand = escapeHtml(getEmailBrandName());
+  await sendMail({
+    from: transactionalFrom(),
+    to,
+    subject: `We received your message — ${getEmailBrandName()}`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Hi ${escapeHtml(fullName)},</h2>
+        <p>Thank you for contacting ${brand}. We've received your message and will respond as soon as we can.</p>
+        <p style="margin-top:24px;color:#888;font-size:12px;">
+          This is an automated confirmation — please do not reply to this email unless you need to add more detail.
+        </p>
+        ${emailBrandSignOff()}
+      </div>
+    `,
+  });
+};
+
 /** Purchased-program participant → facilitator email on Program. */
 export const sendDashboardFacilitatorMessageEmail = async (params: {
   to: string;

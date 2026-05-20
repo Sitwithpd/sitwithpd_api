@@ -1,0 +1,26 @@
+$kind: http-request
+name: "[Public] Submit Contact Form"
+description: |-
+  Public Contact Us form — no auth required.
+
+  Required: `fullName`, `email`, `message` (min 10 chars).
+  Optional: `phone` (e.g. +447359307733), `source` (defaults to contact_page).
+
+  Honeypot: if `website` or `company` is filled, returns 201 without saving (bot trap).
+
+  Saves to `contact_submissions` and emails `platform_settings.supportEmail`
+  (default support@sitwithpd.com). Visitor receives an auto-reply confirmation.
+url: "{{baseUrl}}/api/contact"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "fullName": "Jane Doe",
+      "email": "jane@example.com",
+      "phone": "+447359307733",
+      "message": "I'd like to learn more about your annual camping programme."
+    }
+order: 1000

@@ -1,0 +1,14 @@
+$kind: http-request
+name: "[ADMIN] List Contact Submissions"
+description: |-
+  Admin only. Paginated list of Contact Us submissions.
+
+  Query params:
+  - `page` (default 1)
+  - `limit` (default 20)
+  - `search` — optional filter on email, fullName, or phone
+url: "{{baseUrl}}/api/admin/contact-submissions?page=1&limit=20"
+method: GET
+headers:
+  Authorization: Bearer {{authToken}}
+order: 2000

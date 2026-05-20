@@ -114,6 +114,48 @@
     },
 
     {
+      "name": "📬 Contact",
+      "item": [
+        {
+          "name": "[Public] Submit Contact Form",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Jane Doe\",\n  \"email\": \"jane@example.com\",\n  \"phone\": \"+447359307733\",\n  \"message\": \"I'd like to learn more about your annual camping programme.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/contact",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "contact"]
+            },
+            "description": "Public Contact Us — no auth. Saves to contact_submissions and emails platform supportEmail. Optional phone. Honeypot: website/company fields silently ignored if filled."
+          }
+        },
+        {
+          "name": "[ADMIN] List Contact Submissions",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/contact-submissions?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "contact-submissions"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "search", "value": "", "description": "optional filter on email, fullName, phone" }
+              ]
+            },
+            "description": "Admin only. Paginated contact form submissions."
+          }
+        }
+      ]
+    },
+
+    {
       "name": "🔐 Auth",
       "item": [
         {

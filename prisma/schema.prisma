@@ -448,3 +448,18 @@ model NewsletterSubscription {
 
   @@map("newsletter_subscriptions")
 }
+
+// Public Contact Us page submissions (anonymous visitors).
+model ContactSubmission {
+  id        String   @id @default(cuid())
+  fullName  String
+  email     String
+  phone     String?
+  message   String
+  source    String   @default("contact_page")
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([createdAt])
+  @@map("contact_submissions")
+}
