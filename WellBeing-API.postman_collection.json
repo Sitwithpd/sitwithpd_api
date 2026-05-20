@@ -33,7 +33,8 @@
     { "key": "verifyToken", "value": "", "type": "string" },
     { "key": "blogPostId", "value": "", "type": "string" },
     { "key": "blogSlug", "value": "learning-to-sit-with-your-emotions", "type": "string" },
-    { "key": "newsletterUnsubscribeToken", "value": "", "type": "string" }
+    { "key": "newsletterUnsubscribeToken", "value": "", "type": "string" },
+    { "key": "contactSubmissionId", "value": "", "type": "string" }
   ],
   "item": [
 
@@ -150,6 +151,19 @@
               ]
             },
             "description": "Admin only. Paginated contact form submissions."
+          }
+        },
+        {
+          "name": "[ADMIN] Delete Contact Submission",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/contact-submissions/{{contactSubmissionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "contact-submissions", "{{contactSubmissionId}}"]
+            },
+            "description": "Admin only. Permanent delete — spam, test data, or GDPR erasure. Does not undo emails already sent."
           }
         }
       ]

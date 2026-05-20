@@ -9,6 +9,7 @@ import {
   CONTACT_MESSAGE_MIN,
   CONTACT_PHONE_MAX,
   createContactSubmission,
+  deleteContactSubmissionById,
   listContactSubmissionsAdmin,
 } from '../services/contact.service';
 import { sendContactFormEmail, sendContactFormAutoReplyEmail } from '../utils/email.service';
@@ -112,5 +113,17 @@ export const adminListContactSubmissions = catchAsync(async (req: Request, res: 
     message: 'Contact submissions fetched.',
     data: rows,
     meta: buildMeta(total, page, limit),
+  });
+});
+
+/** DELETE /api/admin/contact-submissions/:id */
+export const adminDeleteContactSubmission = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const deleted = await deleteContactSubmissionById(id);
+  if (!deleted) throw new AppError('Contact submission not found.', 404);
+
+  res.json({
+    success: true,
+    message: 'Contact submission deleted.',
   });
 });

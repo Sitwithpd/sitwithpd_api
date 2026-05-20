@@ -1,0 +1,14 @@
+$kind: http-request
+name: "[ADMIN] Delete Contact Submission"
+description: |-
+  Admin only. Permanently removes a contact submission from the database.
+
+  Use for spam, mistaken test entries, or GDPR erasure after the enquiry
+  has been handled. Does not recall emails already sent to support.
+
+  Set `contactSubmissionId` from a list response `data[].id`, or paste the id here.
+url: "{{baseUrl}}/api/admin/contact-submissions/{{contactSubmissionId}}"
+method: DELETE
+headers:
+  Authorization: Bearer {{authToken}}
+order: 3000

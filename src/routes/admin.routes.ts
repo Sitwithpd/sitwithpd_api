@@ -13,7 +13,10 @@ import {
   getCalEventTypes,
 } from '../controllers/admin.controller';
 import { adminListNewsletterSubscriptions } from '../controllers/newsletter.controller';
-import { adminListContactSubmissions } from '../controllers/contact.controller';
+import {
+  adminDeleteContactSubmission,
+  adminListContactSubmissions,
+} from '../controllers/contact.controller';
 import {
   getAdminPlatformSettings,
   patchAdminGeneralSettings,
@@ -149,6 +152,12 @@ adminRouter.get(
   authenticate,
   adminOnly,
   adminListContactSubmissions
+);
+adminRouter.delete(
+  '/contact-submissions/:id',
+  authenticate,
+  adminOnly,
+  adminDeleteContactSubmission
 );
 adminRouter.get('/cal/event-types', authenticate, adminOnly, getCalEventTypes);
 

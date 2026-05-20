@@ -60,3 +60,10 @@ export async function listContactSubmissionsAdmin(opts: {
 
   return { rows, total };
 }
+
+export async function deleteContactSubmissionById(id: string): Promise<boolean> {
+  const existing = await prisma.contactSubmission.findUnique({ where: { id }, select: { id: true } });
+  if (!existing) return false;
+  await prisma.contactSubmission.delete({ where: { id } });
+  return true;
+}
