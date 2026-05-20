@@ -108,6 +108,11 @@ export async function createConsultationPaymentAndEmail(
       status: 'PENDING',
       paystackRef: reference,
       consultationId,
+      // Stash init-time identifiers so the Flutterwave webhook can recover them
+      // — Flutterwave v3 webhooks strip `meta` from the payload they send.
+      paystackResponse: {
+        _initMeta: { userId: user.id, type: 'CONSULTATION', itemId: consultationId },
+      } as object,
     },
   });
 

@@ -199,7 +199,10 @@ export const initializePayment = catchAsync(async (req: AuthRequest, res: Respon
     reference = txRef;
   }
 
-  // Create a PENDING payment record (unique on `paystackRef` regardless of provider)
+  // Create a PENDING payment record (unique on `paystackRef` regardless of provider).
+  // `paystackResponse._initMeta` lets the webhook recover userId/type/itemId
+  // without depending on the gateway echoing `meta` back — Flutterwave v3 strips
+  // `meta` from webhook deliveries even when we send it at init time.
   await prisma.payment.create({
     data: {
       userId,
@@ -209,6 +212,7 @@ export const initializePayment = catchAsync(async (req: AuthRequest, res: Respon
       provider,
       status: 'PENDING',
       paystackRef: reference,
+      paystackResponse: { _initMeta: { userId, type, itemId } } as object,
       ...(type === 'CAMP' && { campRegistrationId: itemId }),
       ...(type === 'CONSULTATION' && { consultationId: itemId }),
     },
@@ -408,6 +412,12 @@ export const paystackWebhook = async (req: Request, res: Response) => {
 // ── Flutterwave Webhook ───────────────────────────────────────────────────────
 // POST /api/payments/flutterwave-webhook
 // Verified by static `verif-hash` header (set in Flutterwave dashboard).
+//
+// Flutterwave v3 strips the `meta` you pass at init time before delivering the
+// webhook, so we cannot rely on `data.meta`. We look up the local Payment row
+// by `tx_ref` (which we generated and stored at init) and derive userId/type/
+// itemId from our own database. `_initMeta` in Payment.paystackResponse holds
+// the itemId for PROGRAM purchases (CAMP/CONSULTATION already have FK columns).
 export const flutterwaveWebhook = async (req: Request, res: Response) => {
   if (!isValidFlutterwaveWebhookSignature(req.headers['verif-hash'])) {
     return res.status(400).json({ message: 'Invalid signature.' });
@@ -427,9 +437,73 @@ export const flutterwaveWebhook = async (req: Request, res: Response) => {
     return res.sendStatus(200);
   }
 
-  const { tx_ref: reference, meta } = event.data;
-  if (!reference || !meta?.userId || !meta?.type || !meta?.itemId) {
-    console.warn('[flutterwave-webhook] missing tx_ref or meta on completed event.');
+  const reference = event.data?.tx_ref;
+  if (!reference) {
+    console.warn('[flutterwave-webhook] missing tx_ref on completed event.');
+    return res.sendStatus(200);
+  }
+
+  // Look up the Payment row we created at init time. Source of truth for
+  // userId/type/itemId regardless of whether Flutterwave echoes `meta`.
+  const payment = await prisma.payment.findUnique({ where: { paystackRef: reference } });
+  if (!payment) {
+    console.warn(`[flutterwave-webhook] no Payment row found for tx_ref=${reference}.`);
+    return res.sendStatus(200);
+  }
+
+  // Idempotent: a retried webhook delivery is a no-op.
+  if (payment.status === 'SUCCESS') {
+    return res.sendStatus(200);
+  }
+
+  // Defence-in-depth: amount + currency on the event must match what we
+  // initialised with. Guards against forged events even if verif-hash leaks.
+  if (
+    typeof event.data.amount === 'number' &&
+    Number(event.data.amount) !== Number(payment.amount)
+  ) {
+    console.error(
+      `[flutterwave-webhook] amount mismatch: event=${event.data.amount} payment=${payment.amount} tx_ref=${reference}.`
+    );
+    return res.sendStatus(200);
+  }
+  if (
+    typeof event.data.currency === 'string' &&
+    event.data.currency.toUpperCase() !== payment.currency.toUpperCase()
+  ) {
+    console.error(
+      `[flutterwave-webhook] currency mismatch: event=${event.data.currency} payment=${payment.currency} tx_ref=${reference}.`
+    );
+    return res.sendStatus(200);
+  }
+
+  // Resolve itemId from the Payment row. CAMP/CONSULTATION already have it on
+  // dedicated FK columns; PROGRAM falls back to the _initMeta blob stashed at
+  // init time. We also honour `data.meta` when present so the local simulator
+  // continues to work (it sends `meta` explicitly).
+  const eventMeta = event.data.meta;
+  let userId = payment.userId;
+  let type = payment.type as 'PROGRAM' | 'CAMP' | 'CONSULTATION';
+  let itemId: string | null = null;
+
+  if (eventMeta?.userId && eventMeta?.type && eventMeta?.itemId) {
+    userId = eventMeta.userId;
+    type = eventMeta.type;
+    itemId = eventMeta.itemId;
+  } else if (payment.type === 'CAMP') {
+    itemId = payment.campRegistrationId;
+  } else if (payment.type === 'CONSULTATION') {
+    itemId = payment.consultationId;
+  } else if (payment.type === 'PROGRAM') {
+    const initMeta =
+      (payment.paystackResponse as { _initMeta?: { itemId?: string } } | null)?._initMeta;
+    itemId = initMeta?.itemId ?? null;
+  }
+
+  if (!itemId) {
+    console.warn(
+      `[flutterwave-webhook] could not resolve itemId for tx_ref=${reference} type=${payment.type}.`
+    );
     return res.sendStatus(200);
   }
 
@@ -442,9 +516,9 @@ export const flutterwaveWebhook = async (req: Request, res: Response) => {
   try {
     await fulfilSuccessfulPayment({
       reference,
-      userId: meta.userId,
-      type: meta.type,
-      itemId: meta.itemId,
+      userId,
+      type,
+      itemId,
       provider: PaymentProvider.FLUTTERWAVE,
       rawProviderResponse: event.data as object,
       paidAt,
