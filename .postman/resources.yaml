@@ -1,16 +1,18 @@
 workspace:
   id: b30b1b35-658f-4cb9-aebe-b1d9c1c41a0b
+
 localResources:
   collections:
     - ..\WellBeing-API.postman_collection.json
-    - ../postman/collections/Well-Being Web App(Sit-With-PD)
   environments:
     - ../postman/environments/Local.environment.yaml
     - ../postman/environments/render_cloud.environment.yaml
+
+# Each entry here maps a local resource to one or more corresponding objects in Postman Cloud
+
 cloudResources:
   collections:
     ..\postman\collections\Well-Being Platform API: 7a7bfe07-c448-45fc-ad73-ad54204caf8f
-    ../postman/collections/Well-Being Web App(Sit-With-PD): 28053693-026ffc2c-78ea-4bf1-8d51-53ff1e9b1922
   environments:
     ..\postman\environments\Local.environment.yaml: 28053693-56e6857c-3fde-4afd-8ae5-5fe0f8856b7c
     ..\postman\environments\render_cloud.environment.yaml: 28053693-f9c34e0f-4f98-49d0-9e8e-498f1cef89e0

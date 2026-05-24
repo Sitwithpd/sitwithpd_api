@@ -1,7 +1,0 @@
-$kind: http-request
-description: Returns all consultations booked by the logged-in user.
-url: "{{baseUrl}}/api/consultations/my"
-method: GET
-headers:
-  Authorization: Bearer {{authToken}}
-order: 4000

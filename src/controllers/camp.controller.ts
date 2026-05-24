@@ -14,6 +14,10 @@ import {
   whereCountsTowardCampInventory,
   whereCountsTowardTierInventory,
 } from '../services/campInventory.service';
+import {
+  scheduleChatDeleteCamp,
+  scheduleChatReindexCamp,
+} from '../services/chat/chatReindexHook.service';
 
 // ─────────────────────────────────────────────
 // SHARED INCLUDES
@@ -429,6 +433,7 @@ export const createCamp = catchAsync(async (req: AuthRequest, res: Response) => 
     },
   });
 
+  scheduleChatReindexCamp(camp.id);
   res.status(201).json({
     success: true,
     message: 'Camp created.',
@@ -467,6 +472,7 @@ export const updateCamp = catchAsync(async (req: AuthRequest, res: Response) => 
     },
   });
 
+  scheduleChatReindexCamp(camp.id);
   res.json({ success: true, message: 'Camp updated.', data: stripLegacyCampPrice(camp) });
 });
 
@@ -474,8 +480,9 @@ export const updateCamp = catchAsync(async (req: AuthRequest, res: Response) => 
 // Payments on camp registrations retain rows with campRegistrationId nulled (FK SET NULL).
 // Testimonials tied to this camp: campId → null (already onDelete SetNull).
 export const deleteCamp = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
   try {
-    await prisma.camp.delete({ where: { id: req.params.id } });
+    await prisma.camp.delete({ where: { id } });
   } catch (e) {
     const fk = mapForeignKeyDeleteError(e);
     if (fk) throw fk;
@@ -484,6 +491,7 @@ export const deleteCamp = catchAsync(async (req: Request, res: Response) => {
     }
     throw e;
   }
+  scheduleChatDeleteCamp(id);
   res.json({ success: true, message: 'Camp deleted.' });
 });
 
@@ -579,6 +587,7 @@ export const createCampTier = catchAsync(async (req: AuthRequest, res: Response)
         isFeatured: parseBoolean(isFeatured),
       },
     });
+    scheduleChatReindexCamp(campId);
     res.status(201).json({ success: true, message: 'Tier created.', data: tier });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
@@ -617,6 +626,7 @@ export const updateCampTier = catchAsync(async (req: AuthRequest, res: Response)
         ...(isFeatured !== undefined && { isFeatured: parseBoolean(isFeatured) }),
       },
     });
+    scheduleChatReindexCamp(campId);
     res.json({ success: true, message: 'Tier updated.', data: tier });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
@@ -639,6 +649,7 @@ export const deleteCampTier = catchAsync(async (req: Request, res: Response) => 
     if (fk) throw fk;
     throw e;
   }
+  scheduleChatReindexCamp(campId);
   res.json({ success: true, message: 'Tier deleted.' });
 });
 

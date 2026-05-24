@@ -1,7 +1,0 @@
-$kind: http-request
-description: Returns a single consultation service detail.
-url: "{{baseUrl}}/api/consultations/services/{{serviceId}}"
-method: GET
-auth:
-  type: noauth
-order: 2000

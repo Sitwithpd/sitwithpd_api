@@ -1,7 +1,0 @@
-$kind: http-request
-description: Returns full lesson content (including video URLs) for a purchased program. Returns 403 if not purchased.
-url: "{{baseUrl}}/api/dashboard/programs/{{programId}}"
-method: GET
-headers:
-  Authorization: Bearer {{authToken}}
-order: 2000

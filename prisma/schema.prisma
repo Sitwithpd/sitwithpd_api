@@ -82,6 +82,21 @@ enum PlatformCurrency {
   GBP
 }
 
+enum ChatMessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+enum ChatKnowledgeSourceType {
+  PROGRAM
+  CAMP
+  CONSULTATION
+  BLOG
+  POLICY
+  TESTIMONIAL
+}
+
 model PlatformSettings {
   id                        String           @id @default("default")
   platformName              String           @default("Sit With PD")
@@ -126,6 +141,7 @@ model User {
   payments          Payment[]
   programModuleCompletions ProgramModuleCompletion[]
   blogPosts         BlogPost[]
+  chatSessions      ChatSession[]
 
   @@map("users")
 }
@@ -462,4 +478,74 @@ model ContactSubmission {
   @@index([email])
   @@index([createdAt])
   @@map("contact_submissions")
+}
+
+// ── AI Chat (OpenAI + pgvector RAG) ───────────────────────────────────────────
+
+model ChatSession {
+  id              String    @id @default(cuid())
+  userId          String?
+  /// SHA-256 hex of the guest cookie token (never store the raw token).
+  guestTokenHash  String?
+  expiresAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user     User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  messages ChatMessage[]
+  usageLogs ChatUsageLog[]
+
+  @@index([userId])
+  @@index([guestTokenHash])
+  @@index([expiresAt])
+  @@map("chat_sessions")
+}
+
+model ChatMessage {
+  id        String          @id @default(cuid())
+  sessionId String
+  role      ChatMessageRole
+  content   String
+  metadata  Json?
+  createdAt DateTime        @default(now())
+
+  session ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, createdAt])
+  @@map("chat_messages")
+}
+
+model ChatKnowledgeChunk {
+  id          String                  @id @default(cuid())
+  sourceType  ChatKnowledgeSourceType
+  sourceId    String
+  chunkIndex  Int                     @default(0)
+  title       String
+  path        String
+  text        String
+  contentHash String
+  /// pgvector column — read/write via raw SQL ($executeRaw); Prisma cannot query vectors natively.
+  embedding   Unsupported("vector(1536)")?
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+
+  @@unique([sourceType, sourceId, chunkIndex])
+  @@index([sourceType, sourceId])
+  @@index([contentHash])
+  @@map("chat_knowledge_chunks")
+}
+
+model ChatUsageLog {
+  id               String   @id @default(cuid())
+  sessionId        String?
+  promptTokens     Int      @default(0)
+  completionTokens Int      @default(0)
+  estimatedCostUsd Float    @default(0)
+  model            String
+  createdAt        DateTime @default(now())
+
+  session ChatSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@map("chat_usage_logs")
 }

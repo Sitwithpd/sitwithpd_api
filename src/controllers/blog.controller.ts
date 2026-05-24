@@ -9,6 +9,10 @@ import {
 } from '../lib/pagination';
 import { catchAsync, AppError } from '../middleware/error.middleware';
 import { AuthRequest } from '../types';
+import {
+  scheduleChatDeleteBlogPost,
+  scheduleChatReindexBlogPost,
+} from '../services/chat/chatReindexHook.service';
 
 function parseBoolean(input: unknown): boolean {
   if (typeof input === 'boolean') return input;
@@ -352,6 +356,7 @@ export const createBlogPost = catchAsync(async (req: AuthRequest, res: Response)
         author: { select: blogAuthorSelect },
       },
     });
+    scheduleChatReindexBlogPost(post.id);
     res.status(201).json({ success: true, message: 'Blog post created.', data: post });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
@@ -449,6 +454,7 @@ export const updateBlogPost = catchAsync(async (req: AuthRequest, res: Response)
         author: { select: blogAuthorSelect },
       },
     });
+    scheduleChatReindexBlogPost(post.id);
     res.json({ success: true, message: 'Blog post updated.', data: post });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
@@ -472,5 +478,6 @@ export const deleteBlogPost = catchAsync(async (req: Request, res: Response) => 
     throw e;
   }
 
+  scheduleChatDeleteBlogPost(id);
   res.json({ success: true, message: 'Blog post deleted.' });
 });

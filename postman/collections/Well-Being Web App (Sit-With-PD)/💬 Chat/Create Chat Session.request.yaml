@@ -1,0 +1,9 @@
+$kind: http-request
+description: >-
+  Creates a chat session and sets httpOnly cookies `chat_session` and
+  `chat_session_token`. Enable Postman cookie jar for follow-up requests.
+url: "{{baseUrl}}/api/chat/sessions"
+method: POST
+auth:
+  type: noauth
+order: 1100

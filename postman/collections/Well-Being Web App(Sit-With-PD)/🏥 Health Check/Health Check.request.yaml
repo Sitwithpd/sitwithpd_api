@@ -1,7 +1,0 @@
-$kind: http-request
-description: Verify the server is running.
-url: "{{baseUrl}}/health"
-method: GET
-auth:
-  type: noauth
-order: 1000

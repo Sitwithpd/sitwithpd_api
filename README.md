@@ -113,6 +113,18 @@ Health check: `http://localhost:5000/health`
 | GET | `/stats` | Admin | Platform stats |
 | GET | `/users` | Admin | All users |
 | GET | `/users/:id` | Admin | User detail |
+| POST | `/chat/reindex` | Admin | Rebuild AI chat knowledge index (optional `?sourceType=PROGRAM`) |
+| GET | `/chat/stats` | Admin | Chat chunk counts + usage summary |
+
+### Chat — `/api/chat`
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/config` | Public | Widget intro, disclaimers, suggested prompts |
+| POST | `/sessions` | Public (+ optional JWT) | Create session; sets httpOnly cookies |
+| GET | `/sessions/:sessionId` | Session cookies | Message history |
+| POST | `/sessions/:sessionId/messages` | Session cookies | User message → AI reply (JSON or SSE with `"stream": true`) |
+
+**First deploy:** run `npm run chat:reindex` (or `POST /api/admin/chat/reindex`) after setting `OPENAI_API_KEY` so RAG has indexed content.
 
 ---
 
@@ -144,10 +156,12 @@ Change these immediately in production.
 ## Folder Structure
 ```
 src/
-├── config/          # Prisma, Cloudinary, Nodemailer setup
+├── config/          # Prisma, Cloudinary, OpenAI/chat config
 ├── controllers/     # Route handler logic
+├── data/            # Static chat platform knowledge (RAG policy doc)
 ├── middleware/      # Auth, error handling, file uploads
 ├── routes/          # Express route definitions
+├── services/chat/   # RAG indexing, orchestration, safety
 ├── utils/           # Email service
 ├── types/           # TypeScript types
 ├── app.ts           # Express app

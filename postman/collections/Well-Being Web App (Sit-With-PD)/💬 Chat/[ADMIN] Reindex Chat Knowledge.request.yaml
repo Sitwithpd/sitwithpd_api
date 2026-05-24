@@ -1,0 +1,11 @@
+$kind: http-request
+description: >-
+  Full rebuild of chat knowledge index (programs, camps, consultations, blogs,
+  testimonials, platform policy doc). Requires admin JWT.
+url: "{{baseUrl}}/api/admin/chat/reindex"
+method: POST
+headers:
+  Authorization: Bearer {{authToken}}
+auth:
+  type: noauth
+order: 1400

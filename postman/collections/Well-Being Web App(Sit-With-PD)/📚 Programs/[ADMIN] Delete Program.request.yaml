@@ -1,7 +1,0 @@
-$kind: http-request
-description: Admin only. Permanently deletes a program and all its lessons.
-url: "{{baseUrl}}/api/programs/{{programId}}"
-method: DELETE
-headers:
-  Authorization: Bearer {{authToken}}
-order: 6000

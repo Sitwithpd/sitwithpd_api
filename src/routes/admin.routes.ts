@@ -30,6 +30,10 @@ import {
   updateBlogPost,
   deleteBlogPost,
 } from '../controllers/blog.controller';
+import {
+  adminGetChatStats,
+  adminReindexChatKnowledge,
+} from '../controllers/adminChat.controller';
 import { authenticate, adminOnly } from '../middleware/auth.middleware';
 import { enforceVerifiedEmailIfRequired } from '../middleware/platformSettings.middleware';
 import { validate } from '../middleware/validate.middleware';
@@ -160,6 +164,9 @@ adminRouter.delete(
   adminDeleteContactSubmission
 );
 adminRouter.get('/cal/event-types', authenticate, adminOnly, getCalEventTypes);
+
+adminRouter.post('/chat/reindex', authenticate, adminOnly, adminReindexChatKnowledge);
+adminRouter.get('/chat/stats', authenticate, adminOnly, adminGetChatStats);
 
 // Blog (drafts + CRUD — public reads are on /api/blog)
 adminRouter.get('/blog', authenticate, adminOnly, adminListBlogPosts);

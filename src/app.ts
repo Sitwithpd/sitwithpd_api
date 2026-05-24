@@ -15,6 +15,7 @@ import paymentRoutes from './routes/payment.routes';
 import blogRoutes from './routes/blog.routes';
 import newsletterRoutes from './routes/newsletter.routes';
 import contactRoutes from './routes/contact.routes';
+import chatRoutes from './routes/chat.routes';
 import { dashboardRouter, adminRouter } from './routes/admin.routes';
 import { errorHandler } from './middleware/error.middleware';
 import { calWebhook } from './controllers/consultation.cal.controller';
@@ -22,6 +23,7 @@ import { paystackWebhook, flutterwaveWebhook } from './controllers/payment.contr
 import { processExpiredConsultationPayments } from './services/consultationExpiry.service';
 import { processExpiredCampRegistrations } from './services/campRegistrationExpiry.service';
 import { processCampStatusTransitions } from './services/campStatus.service';
+import { cronReindexChatKnowledge } from './controllers/adminChat.controller';
 
 const app = express();
 app.set('trust proxy', 1);
@@ -50,7 +52,11 @@ const limiter = rateLimit({
   message: { success: false, message: 'Too many requests. Please try again later.' },
   skip: (req) => {
     const url = typeof req.originalUrl === 'string' ? req.originalUrl : '';
-    return url.startsWith('/api/newsletter') || url.startsWith('/api/contact');
+    return (
+      url.startsWith('/api/newsletter') ||
+      url.startsWith('/api/contact') ||
+      url.startsWith('/api/chat')
+    );
   },
 });
 
@@ -70,6 +76,12 @@ const contactLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
   message: { success: false, message: 'Too many contact form submissions. Please try again later.' },
+});
+
+const chatLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  message: { success: false, message: 'Too many chat requests. Please try again later.' },
 });
 
 app.use(limiter);
@@ -145,6 +157,15 @@ app.post('/api/internal/cron/camp-status', async (req, res, next) => {
   }
 });
 
+app.post('/api/internal/cron/chat-reindex', (req, res, next) => {
+  const secret = process.env.CRON_SECRET;
+  const auth = req.headers.authorization;
+  if (!secret || auth !== `Bearer ${secret}`) {
+    return res.status(401).json({ success: false, message: 'Unauthorized.' });
+  }
+  Promise.resolve(cronReindexChatKnowledge(req, res, next)).catch(next);
+});
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
@@ -161,6 +182,7 @@ app.use('/api/testimonials', testimonialRoutes);
 app.use('/api/blog', blogRoutes);
 app.use('/api/newsletter', newsletterLimiter, newsletterRoutes);
 app.use('/api/contact', contactLimiter, contactRoutes);
+app.use('/api/chat', chatLimiter, chatRoutes);
 app.use('/api/consultations', consultationRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/dashboard', dashboardRouter);

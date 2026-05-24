@@ -4,6 +4,9 @@ import prisma from '../config/prisma';
 import { buildMeta, parseAdminPagination } from '../lib/pagination';
 import { catchAsync, AppError } from '../middleware/error.middleware';
 import { AuthRequest } from '../types';
+import {
+  scheduleChatReindexConsultationService,
+} from '../services/chat/chatReindexHook.service';
 
 const ADMIN_CONSULTATION_SEARCH_MAX_LEN = 100;
 
@@ -223,6 +226,7 @@ export const createService = catchAsync(async (req: Request, res: Response) => {
       data: createData,
     });
 
+    scheduleChatReindexConsultationService(service.id);
     res.status(201).json({ success: true, message: 'Service created.', data: service });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
@@ -271,6 +275,7 @@ export const updateService = catchAsync(async (req: Request, res: Response) => {
       },
     });
 
+    scheduleChatReindexConsultationService(service.id);
     res.json({ success: true, message: 'Service updated.', data: service });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {

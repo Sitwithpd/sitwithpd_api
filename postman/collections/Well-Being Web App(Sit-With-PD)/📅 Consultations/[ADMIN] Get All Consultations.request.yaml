@@ -1,7 +1,0 @@
-$kind: http-request
-description: Admin only. Returns all consultation bookings across all users.
-url: "{{baseUrl}}/api/consultations"
-method: GET
-headers:
-  Authorization: Bearer {{authToken}}
-order: 5000

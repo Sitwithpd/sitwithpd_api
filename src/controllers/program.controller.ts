@@ -5,6 +5,10 @@ import { mapForeignKeyDeleteError } from '../lib/prismaDeleteErrors';
 import { buildMeta, parseAdminPagination } from '../lib/pagination';
 import { catchAsync, AppError } from '../middleware/error.middleware';
 import { AuthRequest } from '../types';
+import {
+  scheduleChatDeleteProgram,
+  scheduleChatReindexProgram,
+} from '../services/chat/chatReindexHook.service';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Small parse helpers
@@ -412,6 +416,7 @@ export const createProgram = catchAsync(async (req: Request, res: Response) => {
     },
   });
 
+  scheduleChatReindexProgram(program.id);
   res.status(201).json({ success: true, message: 'Program created.', data: program });
 });
 
@@ -492,6 +497,7 @@ export const updateProgram = catchAsync(async (req: Request, res: Response) => {
     throw e;
   }
 
+  scheduleChatReindexProgram(id);
   res.json({ success: true, message: 'Program updated.', data: program });
 });
 
@@ -511,6 +517,7 @@ export const deleteProgram = catchAsync(async (req: Request, res: Response) => {
     }
     throw e;
   }
+  scheduleChatDeleteProgram(id);
   res.json({ success: true, message: 'Program deleted.' });
 });
 
@@ -549,6 +556,7 @@ export const addWeek = catchAsync(async (req: Request, res: Response) => {
     include: { modules: { orderBy: { order: 'asc' } } },
   });
 
+  scheduleChatReindexProgram(programId);
   res.status(201).json({ success: true, message: 'Week added.', data: week });
 });
 
@@ -557,7 +565,7 @@ export const addWeek = catchAsync(async (req: Request, res: Response) => {
  * Admin: updates a week's title, description, or learning objectives.
  */
 export const updateWeek = catchAsync(async (req: Request, res: Response) => {
-  const { weekId } = req.params;
+  const { id: programId, weekId } = req.params;
   const { title, description, learningObjectives, learning_objectives, order } = req.body;
 
   const loRaw = learningObjectives ?? learning_objectives;
@@ -575,6 +583,7 @@ export const updateWeek = catchAsync(async (req: Request, res: Response) => {
     include: { modules: { orderBy: { order: 'asc' } } },
   });
 
+  scheduleChatReindexProgram(programId);
   res.json({ success: true, message: 'Week updated.', data: week });
 });
 
@@ -584,7 +593,7 @@ export const updateWeek = catchAsync(async (req: Request, res: Response) => {
  * Matches the trash icon on the week card.
  */
 export const deleteWeek = catchAsync(async (req: Request, res: Response) => {
-  const { weekId } = req.params;
+  const { id: programId, weekId } = req.params;
   try {
     await prisma.programWeek.delete({ where: { id: weekId } });
   } catch (e) {
@@ -595,6 +604,7 @@ export const deleteWeek = catchAsync(async (req: Request, res: Response) => {
     }
     throw e;
   }
+  scheduleChatReindexProgram(programId);
   res.json({ success: true, message: 'Week deleted.' });
 });
 
@@ -638,7 +648,7 @@ export const getWeeks = catchAsync(async (req: Request, res: Response) => {
  * At least one of contentUrl or embedCode must be provided (Content Link is required).
  */
 export const addModule = catchAsync(async (req: Request, res: Response) => {
-  const { weekId } = req.params;
+  const { id: programId, weekId } = req.params;
   const { title, description, type, duration, contentUrl, embedCode } = req.body;
 
   if (!title) throw new AppError('Module title is required.', 400);
@@ -670,6 +680,7 @@ export const addModule = catchAsync(async (req: Request, res: Response) => {
     },
   });
 
+  scheduleChatReindexProgram(programId);
   res.status(201).json({ success: true, message: 'Module added.', data: module });
 });
 
@@ -678,7 +689,7 @@ export const addModule = catchAsync(async (req: Request, res: Response) => {
  * Admin: updates a module's content.
  */
 export const updateModule = catchAsync(async (req: Request, res: Response) => {
-  const { moduleId } = req.params;
+  const { id: programId, moduleId } = req.params;
   const { title, description, type, duration, contentUrl, embedCode, order } = req.body;
 
   const module = await prisma.programModule.update({
@@ -694,6 +705,7 @@ export const updateModule = catchAsync(async (req: Request, res: Response) => {
     },
   });
 
+  scheduleChatReindexProgram(programId);
   res.json({ success: true, message: 'Module updated.', data: module });
 });
 
@@ -702,7 +714,7 @@ export const updateModule = catchAsync(async (req: Request, res: Response) => {
  * Admin: removes a module from a week (the X icon on a module card).
  */
 export const deleteModule = catchAsync(async (req: Request, res: Response) => {
-  const { moduleId } = req.params;
+  const { id: programId, moduleId } = req.params;
   try {
     await prisma.programModule.delete({ where: { id: moduleId } });
   } catch (e) {
@@ -713,5 +725,6 @@ export const deleteModule = catchAsync(async (req: Request, res: Response) => {
     }
     throw e;
   }
+  scheduleChatReindexProgram(programId);
   res.json({ success: true, message: 'Module deleted.' });
 });

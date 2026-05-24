@@ -1,7 +1,0 @@
-$kind: http-request
-description: Admin only. Returns a list of all users registered for a specific camp with payment status.
-url: "{{baseUrl}}/api/camps/{{campId}}/participants"
-method: GET
-headers:
-  Authorization: Bearer {{authToken}}
-order: 7000

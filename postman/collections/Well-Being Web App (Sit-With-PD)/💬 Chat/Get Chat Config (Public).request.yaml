@@ -1,0 +1,7 @@
+$kind: http-request
+description: Public widget bootstrap — intro, disclaimers, suggested prompts.
+url: "{{baseUrl}}/api/chat/config"
+method: GET
+auth:
+  type: noauth
+order: 1000

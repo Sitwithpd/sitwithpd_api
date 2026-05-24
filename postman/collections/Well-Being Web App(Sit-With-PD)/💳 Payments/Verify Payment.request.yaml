@@ -1,7 +1,0 @@
-$kind: http-request
-description: Check the status of a payment by its reference. Called by the frontend after Paystack redirects back.
-url: "{{baseUrl}}/api/payments/verify/{{paymentRef}}"
-method: GET
-auth:
-  type: noauth
-order: 4000

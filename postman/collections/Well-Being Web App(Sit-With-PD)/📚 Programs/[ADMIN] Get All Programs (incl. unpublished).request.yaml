@@ -1,7 +1,0 @@
-$kind: http-request
-description: Admin only. Returns all programs including drafts, with lesson and purchase counts.
-url: "{{baseUrl}}/api/programs/admin/all"
-method: GET
-headers:
-  Authorization: Bearer {{authToken}}
-order: 3000

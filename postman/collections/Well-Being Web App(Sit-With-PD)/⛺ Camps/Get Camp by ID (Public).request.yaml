@@ -1,7 +1,0 @@
-$kind: http-request
-description: Returns full camp details including registration count.
-url: "{{baseUrl}}/api/camps/{{campId}}"
-method: GET
-auth:
-  type: noauth
-order: 2000

@@ -5,6 +5,10 @@ import { mapForeignKeyDeleteError } from '../lib/prismaDeleteErrors';
 import { buildMeta, parseAdminPagination } from '../lib/pagination';
 import { catchAsync, AppError } from '../middleware/error.middleware';
 import { AuthRequest } from '../types';
+import {
+  scheduleChatDeleteTestimonial,
+  scheduleChatReindexTestimonial,
+} from '../services/chat/chatReindexHook.service';
 
 // GET /api/testimonials?campId=... — public listing (published only)
 export const getTestimonials = catchAsync(async (req: Request, res: Response) => {
@@ -81,6 +85,7 @@ export const createTestimonial = catchAsync(async (req: AuthRequest, res: Respon
     },
   });
 
+  scheduleChatReindexTestimonial(testimonial.id);
   res.status(201).json({ success: true, message: 'Testimonial created.', data: testimonial });
 });
 
@@ -111,15 +116,17 @@ export const updateTestimonial = catchAsync(async (req: AuthRequest, res: Respon
     },
   });
 
+  scheduleChatReindexTestimonial(testimonial.id);
   res.json({ success: true, message: 'Testimonial updated.', data: testimonial });
 });
 
 // DELETE /api/testimonials/:id — admin
 export const deleteTestimonial = catchAsync(async (req: Request, res: Response) => {
-  const existing = await prisma.testimonial.findUnique({ where: { id: req.params.id } });
+  const { id } = req.params;
+  const existing = await prisma.testimonial.findUnique({ where: { id } });
   if (!existing) throw new AppError('Testimonial not found.', 404);
   try {
-    await prisma.testimonial.delete({ where: { id: req.params.id } });
+    await prisma.testimonial.delete({ where: { id } });
   } catch (e) {
     const fk = mapForeignKeyDeleteError(e);
     if (fk) throw fk;
@@ -128,6 +135,7 @@ export const deleteTestimonial = catchAsync(async (req: Request, res: Response) 
     }
     throw e;
   }
+  scheduleChatDeleteTestimonial(id);
   res.json({ success: true, message: 'Testimonial deleted.' });
 });
 
