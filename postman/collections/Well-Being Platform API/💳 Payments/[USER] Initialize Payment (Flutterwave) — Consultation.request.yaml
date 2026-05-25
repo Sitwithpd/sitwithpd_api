@@ -1,0 +1,17 @@
+$kind: http-request
+description: Flutterwave variant of the consultation init call. Useful for international clients paying for a session.
+url: "{{baseUrl}}/api/payments/initialize"
+method: POST
+headers:
+  Authorization: Bearer {{authToken}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "type": "CONSULTATION",
+      "itemId": "{{consultationId}}",
+      "provider": "FLUTTERWAVE",
+      "currency": "USD"
+    }
+order: 6000

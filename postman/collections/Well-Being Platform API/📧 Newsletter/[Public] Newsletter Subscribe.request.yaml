@@ -1,0 +1,16 @@
+$kind: http-request
+description: No auth. Stricter rate limit (30/15min). Saves to PostgreSQL and syncs to Resend Contacts when RESEND_API_KEY is set.
+url: "{{baseUrl}}/api/newsletter/subscribe"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "email": "newsletter@example.com",
+      "source": "footer"
+    }
+auth:
+  type: noauth
+order: 1000

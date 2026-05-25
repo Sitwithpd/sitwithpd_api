@@ -1,9 +1,0 @@
-$kind: http-request
-description: |-
-  Purchased programme tree: each module includes `completedAt` (ISO or null).
-  Payload also includes root `progress` (percent, week counts, completion status).
-url: "{{baseUrl}}/api/dashboard/programs/{{programId}}"
-method: GET
-headers:
-  Authorization: Bearer {{authToken}}
-order: 2000

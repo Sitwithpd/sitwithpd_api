@@ -1,0 +1,7 @@
+$kind: http-request
+description: Call when the learner finishes a module (e.g. video ended, quiz submitted). Idempotent. Returns updated `ProgramProgressOverview`. Sets `purchase.programCompletedAt` when 100% modules done.
+url: "{{baseUrl}}/api/dashboard/programs/{{programId}}/modules/{{programModuleId}}/complete"
+method: POST
+headers:
+  Authorization: Bearer {{authToken}}
+order: 3000

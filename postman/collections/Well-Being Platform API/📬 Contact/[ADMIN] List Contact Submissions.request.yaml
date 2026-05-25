@@ -1,0 +1,15 @@
+$kind: http-request
+description: Admin only. Paginated contact form submissions.
+url: "{{baseUrl}}/api/admin/contact-submissions?page=1&limit=20&search="
+method: GET
+headers:
+  Authorization: Bearer {{authToken}}
+queryParams:
+  - key: page
+    value: "1"
+  - key: limit
+    value: "20"
+  - key: search
+    value: ""
+    description: optional filter on email, fullName, phone
+order: 2000

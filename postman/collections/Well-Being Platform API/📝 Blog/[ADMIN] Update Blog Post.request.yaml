@@ -1,0 +1,29 @@
+$kind: http-request
+description: Admin only. Partial PATCH (minimal example). Optional authorId — enable and set CUID to attach, empty to clear.
+url: "{{baseUrl}}/api/admin/blog/{{blogPostId}}"
+method: PATCH
+headers:
+  Authorization: Bearer {{authToken}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: readTimeMinutes
+      value: "7"
+    - type: text
+      key: isPublished
+      value: "true"
+    - type: text
+      key: category
+      value: REFLECTION
+    - type: text
+      key: authorId
+      value: "{{userId}}"
+      description: Enable to set or clear (empty) linked author
+      disabled: true
+    - type: file
+      key: coverImage
+      src:
+        - ""
+      description: Optional
+order: 8000

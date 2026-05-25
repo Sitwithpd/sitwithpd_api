@@ -1,0 +1,15 @@
+$kind: http-request
+description: "Admin only. Paginated. Optional campId. Response: { data, meta }."
+url: "{{baseUrl}}/api/testimonials/admin/all?campId=&page=1&limit=20"
+method: GET
+headers:
+  Authorization: Bearer {{authToken}}
+queryParams:
+  - key: campId
+    value: ""
+    description: optional — filter by camp
+  - key: page
+    value: "1"
+  - key: limit
+    value: "20"
+order: 3000

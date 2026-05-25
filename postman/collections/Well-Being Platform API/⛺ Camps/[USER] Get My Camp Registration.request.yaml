@@ -1,0 +1,7 @@
+$kind: http-request
+description: Returns the logged-in user's registration for this camp (status, paymentExpiresAt, tier, payment) or data=null when none. Use to drive Apply vs Complete payment vs Confirmed without guessing.
+url: "{{baseUrl}}/api/camps/{{campId}}/my-registration"
+method: GET
+headers:
+  Authorization: Bearer {{authToken}}
+order: 6000

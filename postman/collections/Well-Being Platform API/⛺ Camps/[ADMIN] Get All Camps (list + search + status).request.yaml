@@ -1,0 +1,19 @@
+$kind: http-request
+description: Admin only. Paginated `{ data, meta }`. All camp statuses unless `status` query is set. `_count` includes registrations (for “enrolled” columns), tiers, images.
+url: "{{baseUrl}}/api/camps/admin/all?page=1&limit=20&search="
+method: GET
+headers:
+  Authorization: Bearer {{authToken}}
+queryParams:
+  - key: page
+    value: "1"
+  - key: limit
+    value: "20"
+  - key: search
+    value: ""
+    description: Optional. Substring on title, location, or description (case-insensitive). Max 100 chars.
+  - key: status
+    value: ""
+    disabled: true
+    description: Optional. UPCOMING | ONGOING | COMPLETED | CANCELLED. Omit for all statuses.
+order: 2000

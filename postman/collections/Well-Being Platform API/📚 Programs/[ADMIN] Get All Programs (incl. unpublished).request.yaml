@@ -1,0 +1,20 @@
+$kind: http-request
+description: "Admin only. Paginated. Optional search + category (program type). Programs (published and unpublished) with week/purchase _counts. Response: { data, meta }."
+url: "{{baseUrl}}/api/programs/admin/all?page=1&limit=20&search=&category="
+method: GET
+headers:
+  Authorization: Bearer {{authToken}}
+queryParams:
+  - key: page
+    value: "1"
+    description: default 1
+  - key: limit
+    value: "20"
+    description: default 20, max 100
+  - key: search
+    value: ""
+    description: Substring on title/description (case-insensitive). Max 100 chars.
+  - key: category
+    value: ""
+    description: LEADERS | STUDENTS | PROFESSIONALS
+order: 3000

@@ -1,0 +1,7 @@
+$kind: http-request
+description: Single testimonial by id.
+url: "{{baseUrl}}/api/testimonials/{{testimonialId}}"
+method: GET
+auth:
+  type: noauth
+order: 2000

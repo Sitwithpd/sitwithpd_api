@@ -1,0 +1,16 @@
+$kind: http-request
+description: Creates a chat session and sets httpOnly cookies `chat_session` and `chat_session_token`. Enable Postman cookie jar for follow-up requests. Saves `chatSessionId` from the response.
+url: "{{baseUrl}}/api/chat/sessions"
+method: POST
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      const res = pm.response.json();
+      if (res.data && res.data.sessionId) {
+        pm.collectionVariables.set('chatSessionId', res.data.sessionId);
+        console.log('Chat session saved:', res.data.sessionId);
+      }
+    language: text/javascript
+order: 2000

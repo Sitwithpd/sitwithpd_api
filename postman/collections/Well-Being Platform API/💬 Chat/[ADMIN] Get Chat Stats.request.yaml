@@ -1,0 +1,7 @@
+$kind: http-request
+description: Chunk counts, last indexed time, and month-to-date OpenAI usage estimate.
+url: "{{baseUrl}}/api/admin/chat/stats"
+method: GET
+headers:
+  Authorization: Bearer {{authToken}}
+order: 6000

@@ -1,0 +1,16 @@
+$kind: http-request
+description: Admin only. Updates a specific lesson.
+url: "{{baseUrl}}/api/programs/{{programId}}/lessons/{{lessonId}}"
+method: PATCH
+headers:
+  Authorization: Bearer {{authToken}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: title
+      value: Updated Lesson Title
+    - type: text
+      key: content
+      value: Updated lesson content goes here...
+order: 8000

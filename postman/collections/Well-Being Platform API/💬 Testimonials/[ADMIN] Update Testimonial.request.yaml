@@ -1,0 +1,21 @@
+$kind: http-request
+description: Admin only. Multipart partial update.
+url: "{{baseUrl}}/api/testimonials/{{testimonialId}}"
+method: PATCH
+headers:
+  Authorization: Bearer {{authToken}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: quote
+      value: Updated quote text after editing.
+    - type: text
+      key: isPublished
+      value: "true"
+    - type: file
+      key: avatar
+      src:
+        - ""
+      description: Optional new avatar
+order: 5000

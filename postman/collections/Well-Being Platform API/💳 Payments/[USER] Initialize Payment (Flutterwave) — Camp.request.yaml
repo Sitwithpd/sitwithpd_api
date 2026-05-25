@@ -1,0 +1,17 @@
+$kind: http-request
+description: Flutterwave variant of camp init. Same lifecycle / 400 rules as the Paystack variant. Use non-NGN currency only when pricing/cards are international.
+url: "{{baseUrl}}/api/payments/initialize"
+method: POST
+headers:
+  Authorization: Bearer {{authToken}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "type": "CAMP",
+      "itemId": "{{campRegistrationId}}",
+      "provider": "FLUTTERWAVE",
+      "currency": "USD"
+    }
+order: 4000

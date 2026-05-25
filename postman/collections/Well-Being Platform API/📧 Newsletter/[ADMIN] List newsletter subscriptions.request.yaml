@@ -1,0 +1,19 @@
+$kind: http-request
+description: Omits unsubscribeToken per row for security.
+url: "{{baseUrl}}/api/admin/newsletter/subscriptions?page=1&limit=20&search=&status=all"
+method: GET
+headers:
+  Authorization: Bearer {{authToken}}
+queryParams:
+  - key: page
+    value: "1"
+  - key: limit
+    value: "20"
+    description: max 100
+  - key: search
+    value: ""
+    description: substring on email or source
+  - key: status
+    value: all
+    description: all | active | unsubscribed
+order: 3000

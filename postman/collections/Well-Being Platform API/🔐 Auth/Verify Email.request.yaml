@@ -1,0 +1,9 @@
+$kind: http-request
+description: "Confirm email using the token from the verification email (48h expiry). Set `verifyToken` from the email link query string. Response `data`: id, firstName, lastName, email, role, isEmailVerified, createdAt — use GET /me for Settings fields."
+url: "{{baseUrl}}/api/auth/verify-email?token={{verifyToken}}"
+method: GET
+queryParams:
+  token: "{{verifyToken}}"
+auth:
+  type: noauth
+order: 8000

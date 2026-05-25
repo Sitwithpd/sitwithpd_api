@@ -1,0 +1,10 @@
+$kind: http-request
+description: "Admin only. Paginated. Response: { data, meta }."
+url: "{{baseUrl}}/api/payments?page=1&limit=20"
+method: GET
+headers:
+  Authorization: Bearer {{authToken}}
+queryParams:
+  page: "1"
+  limit: "20"
+order: 8000

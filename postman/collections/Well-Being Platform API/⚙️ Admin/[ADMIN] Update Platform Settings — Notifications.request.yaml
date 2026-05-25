@@ -1,0 +1,14 @@
+$kind: http-request
+description: PATCH with emailNotificationsEnabled (required boolean). When false, sendMail skips delivery (logged).
+url: "{{baseUrl}}/api/admin/settings/notifications"
+method: PATCH
+headers:
+  Authorization: Bearer {{authToken}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "emailNotificationsEnabled": true
+    }
+order: 8000

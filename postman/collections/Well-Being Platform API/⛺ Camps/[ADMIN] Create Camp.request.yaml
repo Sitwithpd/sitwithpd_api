@@ -1,0 +1,51 @@
+$kind: http-request
+description: Admin only. Creates a camp. Add participation tiers for pricing. benefits powers the Why attend list; public camp payloads omit legacy camp.price.
+url: "{{baseUrl}}/api/camps"
+method: POST
+headers:
+  Authorization: Bearer {{authToken}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: title
+      value: Sit-With-PD Annual Camping Programme
+    - type: text
+      key: description
+      value: A presence-based retreat to pause, reflect, and reconnect.
+    - type: text
+      key: location
+      value: Retreat venue TBD
+    - type: text
+      key: currency
+      value: USD
+      description: ISO currency code (e.g. USD, NGN)
+    - type: text
+      key: benefits
+      value: '["Pause and reconnect with yourself","Experience guided reflective practices","Build meaningful connections","Gain clarity and emotional balance"]'
+      description: JSON array or comma-separated list
+    - type: text
+      key: capacity
+      value: "30"
+      description: Total seats (sum of registration participantCount)
+    - type: text
+      key: startDate
+      value: 2026-05-01T08:00:00.000Z
+    - type: text
+      key: endDate
+      value: 2026-05-03T17:00:00.000Z
+    - type: file
+      key: thumbnail
+      src:
+        - ""
+      description: "Optional: camp thumbnail image"
+scripts:
+  - type: afterResponse
+    code: |-
+      const res = pm.response.json();
+      if (res.data && res.data.id) {
+        pm.collectionVariables.set('campId', res.data.id);
+        console.log('Camp ID saved:', res.data.id);
+      }
+    language: text/javascript
+order: 7000

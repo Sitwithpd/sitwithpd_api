@@ -1,7 +1,0 @@
-$kind: http-request
-description: Returns a single testimonial by id (any publish state).
-url: "{{baseUrl}}/api/testimonials/{{testimonialId}}"
-method: GET
-auth:
-  type: noauth
-order: 2000

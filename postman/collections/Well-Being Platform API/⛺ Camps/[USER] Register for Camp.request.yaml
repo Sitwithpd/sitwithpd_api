@@ -1,0 +1,39 @@
+$kind: http-request
+description: |-
+  Submits or refreshes a camp application. tierId required. Success 201: data includes status=PENDING_PAYMENT, paymentExpiresAt (~60 min ISO), tier, camp. Message: Application submitted. Please complete payment within 60 minutes. Then POST /api/payments/initialize with type CAMP and itemId = registration id.
+
+  Retry errors: You have already applied for this camp. (CONFIRMED); You have a pending application for this camp... (active hold — resume Paystack); A previous payment is pending review... (SUCCESS payment awaiting ops refund). After worker marks EXPIRED, POST register again reuses the same row with a fresh paymentExpiresAt.
+url: "{{baseUrl}}/api/camps/{{campId}}/register"
+method: POST
+headers:
+  Authorization: Bearer {{authToken}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "tierId": "{{campTierId}}",
+      "applicantDetails": {
+        "fullName": "Jane Doe",
+        "phone": "+2348000000000",
+        "emergencyContact": {
+          "name": "John Doe",
+          "phone": "+2348000000001",
+          "relationship": "Spouse"
+        },
+        "dietaryRestrictions": "Vegetarian",
+        "accommodationPreference": "Ground floor if possible",
+        "partyMembers": [],
+        "notes": "First time attending."
+      }
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      const res = pm.response.json();
+      if (res.data && res.data.id) {
+        pm.collectionVariables.set('campRegistrationId', res.data.id);
+        console.log('Camp Registration ID saved:', res.data.id);
+      }
+    language: text/javascript
+order: 5000

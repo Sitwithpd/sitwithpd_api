@@ -1,0 +1,15 @@
+$kind: http-request
+description: Token from DB newsletter_subscriptions.unsubscribeToken after subscribe — paste into collection variable newsletterUnsubscribeToken. Omit format/json for 302 redirect to CLIENT_URL.
+url: "{{baseUrl}}/api/newsletter/unsubscribe?token={{newsletterUnsubscribeToken}}&format=json"
+method: GET
+headers:
+  Accept: application/json
+queryParams:
+  - key: token
+    value: "{{newsletterUnsubscribeToken}}"
+    description: From DB newsletter_subscriptions.unsubscribeToken after subscribe.
+  - key: format
+    value: json
+auth:
+  type: noauth
+order: 2000

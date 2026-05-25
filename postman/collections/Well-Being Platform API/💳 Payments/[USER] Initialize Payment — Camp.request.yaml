@@ -1,0 +1,24 @@
+$kind: http-request
+description: |-
+  Initializes a payment for CAMP. itemId = camp registration id. Only allowed while registration is payable (PENDING_PAYMENT with future paymentExpiresAt).
+
+  Optional: provider (PAYSTACK | FLUTTERWAVE), currency (ISO).
+
+  400: You have already paid for this application. OR This application has expired. Please re-apply to obtain a new payment window.
+
+  Stale PENDING sessions are detached (FAILED + null FK) before creating the new Payment row.
+url: "{{baseUrl}}/api/payments/initialize"
+method: POST
+headers:
+  Authorization: Bearer {{authToken}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "type": "CAMP",
+      "itemId": "{{campRegistrationId}}",
+      "provider": "PAYSTACK",
+      "currency": "NGN"
+    }
+order: 3000

@@ -1,8 +1,0 @@
-$kind: http-request
-description: "Admin only. Returns platform overview: total users, programs,
-  camps, consultations, total revenue, and recent payments."
-url: "{{baseUrl}}/api/admin/stats"
-method: GET
-headers:
-  Authorization: Bearer {{authToken}}
-order: 1000

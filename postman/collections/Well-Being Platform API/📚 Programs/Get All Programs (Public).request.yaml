@@ -1,0 +1,14 @@
+$kind: http-request
+description: "Published programs only. Optional filters: search, category (program type). No auth."
+url: "{{baseUrl}}/api/programs?search=&category="
+method: GET
+queryParams:
+  - key: search
+    value: ""
+    description: Substring on title/description (case-insensitive). Max 100 chars.
+  - key: category
+    value: ""
+    description: LEADERS | STUDENTS | PROFESSIONALS
+auth:
+  type: noauth
+order: 1000

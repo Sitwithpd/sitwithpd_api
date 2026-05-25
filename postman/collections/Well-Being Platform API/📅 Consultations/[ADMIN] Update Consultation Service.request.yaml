@@ -1,0 +1,15 @@
+$kind: http-request
+description: Admin only. Updates a consultation service. Set isActive=false to hide it from users.
+url: "{{baseUrl}}/api/consultations/services/{{serviceId}}"
+method: PATCH
+headers:
+  Authorization: Bearer {{authToken}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "price": 20000,
+      "isActive": true
+    }
+order: 8000

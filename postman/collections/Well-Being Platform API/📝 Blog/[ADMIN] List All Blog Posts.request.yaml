@@ -1,0 +1,25 @@
+$kind: http-request
+description: "Admin only. Always paginated (default page=1, limit=20). Response: { data, meta }. Each row may include nested author when set."
+url: "{{baseUrl}}/api/admin/blog?status=&category=&search=&q=&page=1&limit=20"
+method: GET
+headers:
+  Authorization: Bearer {{authToken}}
+queryParams:
+  - key: status
+    value: ""
+    description: all (default) | draft | published
+  - key: category
+    value: ""
+    description: optional — REFLECTION | WELLBEING | PERSONAL_GROWTH
+  - key: search
+    value: ""
+    description: optional — q works too; title, excerpt, slug
+  - key: q
+    value: ""
+    description: alias for search
+  - key: page
+    value: "1"
+  - key: limit
+    value: "20"
+    description: max 100
+order: 4000

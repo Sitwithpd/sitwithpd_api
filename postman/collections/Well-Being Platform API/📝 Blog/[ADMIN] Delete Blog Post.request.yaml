@@ -1,0 +1,7 @@
+$kind: http-request
+description: Admin only. Permanently deletes the post. Uses blogPostId.
+url: "{{baseUrl}}/api/admin/blog/{{blogPostId}}"
+method: DELETE
+headers:
+  Authorization: Bearer {{authToken}}
+order: 10000

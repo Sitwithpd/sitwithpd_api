@@ -1,8 +1,0 @@
-$kind: http-request
-description: Logged-in users only. Sends a new verification link if the account
-  is not yet verified.
-url: "{{baseUrl}}/api/auth/resend-verification"
-method: POST
-headers:
-  Authorization: Bearer {{authToken}}
-order: 6000

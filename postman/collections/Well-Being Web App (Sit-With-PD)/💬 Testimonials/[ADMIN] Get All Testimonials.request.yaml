@@ -1,9 +1,0 @@
-$kind: http-request
-description: >-
-  Admin only. All testimonials including unpublished. Append
-  `?campId={{campId}}` when filtering by camp.
-url: "{{baseUrl}}/api/testimonials/admin/all"
-method: GET
-headers:
-  Authorization: Bearer {{authToken}}
-order: 3000

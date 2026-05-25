@@ -1,0 +1,7 @@
+$kind: http-request
+description: Admin only. Single post by id (draft or published), including nested author when set. Set blogPostId from List or from Create test script.
+url: "{{baseUrl}}/api/admin/blog/{{blogPostId}}"
+method: GET
+headers:
+  Authorization: Bearer {{authToken}}
+order: 5000

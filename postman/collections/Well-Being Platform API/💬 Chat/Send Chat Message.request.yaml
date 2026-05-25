@@ -1,0 +1,16 @@
+$kind: http-request
+description: Send a user message (JSON response). Requires session cookies from Create Chat Session. Run `npm run chat:reindex` after deploy so RAG has indexed content.
+url: "{{baseUrl}}/api/chat/sessions/{{chatSessionId}}/messages"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "message": "What programs do you offer?",
+      "stream": false
+    }
+auth:
+  type: noauth
+order: 4000

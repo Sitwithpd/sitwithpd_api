@@ -1,7 +1,0 @@
-$kind: http-request
-description: Admin only. Permanently deletes a testimonial.
-url: "{{baseUrl}}/api/testimonials/{{testimonialId}}"
-method: DELETE
-headers:
-  Authorization: Bearer {{authToken}}
-order: 6000

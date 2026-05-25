@@ -1,0 +1,7 @@
+$kind: http-request
+description: Admin only. Permanent delete — spam, test data, or GDPR erasure. Does not undo emails already sent.
+url: "{{baseUrl}}/api/admin/contact-submissions/{{contactSubmissionId}}"
+method: DELETE
+headers:
+  Authorization: Bearer {{authToken}}
+order: 3000

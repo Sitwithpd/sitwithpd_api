@@ -1,0 +1,57 @@
+$kind: http-request
+description: Admin only. isPublished false — visible in admin list only until you publish. Optional authorId as on Create Blog Post.
+url: "{{baseUrl}}/api/admin/blog"
+method: POST
+headers:
+  Authorization: Bearer {{authToken}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: title
+      value: Why Slowing Down Matters (draft)
+    - type: text
+      key: slug
+      value: why-slowing-down-matters-draft
+    - type: text
+      key: excerpt
+      value: In a fast-paced world, creating space to pause can improve clarity.
+    - type: text
+      key: body
+      value: |-
+        ## Draft
+
+        Content not visible on the public blog until published.
+    - type: text
+      key: category
+      value: PERSONAL_GROWTH
+    - type: text
+      key: readTimeMinutes
+      value: "5"
+    - type: text
+      key: isPublished
+      value: "false"
+    - type: text
+      key: authorId
+      value: "{{userId}}"
+      description: Optional users.id
+      disabled: true
+    - type: text
+      key: coverImageUrl
+      value: ""
+    - type: file
+      key: coverImage
+      src:
+        - ""
+scripts:
+  - type: afterResponse
+    code: |-
+      const res = pm.response.json();
+      if (res.data && res.data.id) {
+        pm.collectionVariables.set('blogPostId', res.data.id);
+        if (res.data.slug) {
+          pm.collectionVariables.set('blogSlug', res.data.slug);
+        }
+      }
+    language: text/javascript
+order: 7000

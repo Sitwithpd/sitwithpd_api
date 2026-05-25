@@ -1,0 +1,17 @@
+$kind: http-request
+description: "Admin only. Fetches from Cal.com then paginates in memory. Response: { data, meta }."
+url: "{{baseUrl}}/api/admin/cal/event-types?page=1&limit=20"
+method: GET
+headers:
+  Authorization: Bearer {{authToken}}
+queryParams:
+  - key: username
+    value: ""
+    disabled: true
+    description: Optional. Cal.com username to scope event types (see Cal API).
+  - key: page
+    value: "1"
+    description: slices the fetched Cal.com list
+  - key: limit
+    value: "20"
+order: 4000

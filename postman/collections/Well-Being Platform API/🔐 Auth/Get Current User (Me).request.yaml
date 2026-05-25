@@ -1,0 +1,9 @@
+$kind: http-request
+description: |-
+  Returns the authenticated user: core fields plus Settings — phone, timezone, notifyEmail, notifyProgramReminders, notifyPush, hasPassword — and createdAt.
+  OAuth-only accounts typically have hasPassword false.
+url: "{{baseUrl}}/api/auth/me"
+method: GET
+headers:
+  Authorization: Bearer {{authToken}}
+order: 4000

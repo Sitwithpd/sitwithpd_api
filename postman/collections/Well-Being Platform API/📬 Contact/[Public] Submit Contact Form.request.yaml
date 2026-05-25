@@ -1,0 +1,18 @@
+$kind: http-request
+description: "Public Contact Us — no auth. Saves to contact_submissions and emails platform supportEmail. Optional phone. Honeypot: website/company fields silently ignored if filled."
+url: "{{baseUrl}}/api/contact"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "fullName": "Jane Doe",
+      "email": "jane@example.com",
+      "phone": "+447359307733",
+      "message": "I'd like to learn more about your annual camping programme."
+    }
+auth:
+  type: noauth
+order: 1000

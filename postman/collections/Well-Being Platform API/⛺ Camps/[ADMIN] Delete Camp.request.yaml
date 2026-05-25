@@ -1,0 +1,7 @@
+$kind: http-request
+description: Admin only. Deletes a camp.
+url: "{{baseUrl}}/api/camps/{{campId}}"
+method: DELETE
+headers:
+  Authorization: Bearer {{authToken}}
+order: 9000

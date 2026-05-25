@@ -1,0 +1,9 @@
+$kind: http-request
+description: Public. Same as Get All with category query. Change category value as needed.
+url: "{{baseUrl}}/api/blog?category=WELLBEING"
+method: GET
+queryParams:
+  category: WELLBEING
+auth:
+  type: noauth
+order: 2000

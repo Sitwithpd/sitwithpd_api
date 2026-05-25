@@ -1,0 +1,7 @@
+$kind: http-request
+description: Admin only. Full user profile including all purchases, camp registrations, consultations, and payment history.
+url: "{{baseUrl}}/api/admin/users/{{userId}}"
+method: GET
+headers:
+  Authorization: Bearer {{authToken}}
+order: 3000

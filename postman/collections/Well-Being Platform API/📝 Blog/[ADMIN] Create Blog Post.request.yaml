@@ -1,0 +1,68 @@
+$kind: http-request
+description: "Admin only. Multipart. Required: title, excerpt, body, category. Optional slug, readTimeMinutes, isPublished, authorId, author/authorDisplayName (byline string), cover image or coverImageUrl."
+url: "{{baseUrl}}/api/admin/blog"
+method: POST
+headers:
+  Authorization: Bearer {{authToken}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: title
+      value: Learning to Sit With Your Emotions
+    - type: text
+      key: slug
+      value: learning-to-sit-with-your-emotions
+      description: Optional
+    - type: text
+      key: excerpt
+      value: Understanding your emotions without rushing to fix them can lead to deeper clarity and lasting growth.
+    - type: text
+      key: body
+      value: |-
+        ## Intro
+
+        Full article body (markdown or HTML).
+
+        - Point one
+        - Point two
+    - type: text
+      key: category
+      value: WELLBEING
+    - type: text
+      key: readTimeMinutes
+      value: "5"
+    - type: text
+      key: isPublished
+      value: "true"
+    - type: text
+      key: authorId
+      value: "{{userId}}"
+      description: Optional users.id; disabled = omit so server assigns authenticated admin
+      disabled: true
+    - type: text
+      key: author
+      value: Samuel O.
+      description: "Optional public byline (alias: authorDisplayName)"
+      disabled: true
+    - type: text
+      key: coverImageUrl
+      value: ""
+    - type: file
+      key: coverImage
+      src:
+        - ""
+      description: Optional cover image
+scripts:
+  - type: afterResponse
+    code: |-
+      const res = pm.response.json();
+      if (res.data && res.data.id) {
+        pm.collectionVariables.set('blogPostId', res.data.id);
+        if (res.data.slug) {
+          pm.collectionVariables.set('blogSlug', res.data.slug);
+        }
+        console.log('blogPostId / blogSlug saved:', res.data.id, res.data.slug);
+      }
+    language: text/javascript
+order: 6000

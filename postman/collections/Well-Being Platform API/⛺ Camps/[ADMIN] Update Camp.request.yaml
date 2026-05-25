@@ -1,0 +1,23 @@
+$kind: http-request
+description: "Admin only. Partial update. Status options: UPCOMING, ONGOING, COMPLETED, CANCELLED. Pricing is managed via tier endpoints; camp.price is not collected."
+url: "{{baseUrl}}/api/camps/{{campId}}"
+method: PATCH
+headers:
+  Authorization: Bearer {{authToken}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: status
+      value: UPCOMING
+      description: UPCOMING | ONGOING | COMPLETED | CANCELLED
+    - type: text
+      key: currency
+      value: USD
+    - type: text
+      key: benefits
+      value: '["Pause and reconnect with yourself","Experience guided reflective practices","Build meaningful connections","Gain clarity and emotional balance"]'
+    - type: text
+      key: capacity
+      value: "40"
+order: 8000

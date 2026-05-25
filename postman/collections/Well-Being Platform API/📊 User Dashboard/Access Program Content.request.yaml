@@ -1,0 +1,7 @@
+$kind: http-request
+description: Purchased programme only. Full week/module tree plus `completedAt` per module and root `progress` rollup. 403 if not purchased.
+url: "{{baseUrl}}/api/dashboard/programs/{{programId}}"
+method: GET
+headers:
+  Authorization: Bearer {{authToken}}
+order: 2000

@@ -2,8 +2,7 @@ workspace:
   id: b30b1b35-658f-4cb9-aebe-b1d9c1c41a0b
 
 localResources:
-  collections:
-    - ../postman/collections/Well-Being Web App (Sit-With-PD)
+  collections: []
   environments:
     - ../postman/environments/Local.environment.yaml
     - ../postman/environments/render_cloud.environment.yaml
@@ -16,3 +15,5 @@ cloudResources:
     ..\postman\environments\render_cloud.environment.yaml: 28053693-f9c34e0f-4f98-49d0-9e8e-498f1cef89e0
     ../postman/environments/Local.environment.yaml: 28053693-56e6857c-3fde-4afd-8ae5-5fe0f8856b7c
     ../postman/environments/render_cloud.environment.yaml: 28053693-f9c34e0f-4f98-49d0-9e8e-498f1cef89e0
+  collections:
+    ..\postman\collections\Well-Being Platform API: faa650d8-82ac-42f9-8f8e-1e04aac9529e

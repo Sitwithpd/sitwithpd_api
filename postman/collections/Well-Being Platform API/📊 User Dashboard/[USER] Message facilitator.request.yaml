@@ -1,0 +1,15 @@
+$kind: http-request
+description: Emails the program’s **facilitatorEmail** (set in admin program form). Requires an active **purchase** with successful payment. Same body rules as Contact support. Returns **400** if facilitator email is missing — UI can fall back to Contact support.
+url: "{{baseUrl}}/api/dashboard/programs/{{programId}}/contact-facilitator"
+method: POST
+headers:
+  Authorization: Bearer {{authToken}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "subject": "Question about this week",
+      "message": "Hi, could you clarify the assignment for week 3? Thank you."
+    }
+order: 5000

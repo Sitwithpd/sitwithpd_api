@@ -1,0 +1,33 @@
+$kind: http-request
+description: ⚠️ For local testing only. In production Flutterwave calls this automatically. The handler is idempotent — Flutterwave retries are safe.
+url: "{{baseUrl}}/api/payments/flutterwave-webhook"
+method: POST
+headers:
+  - key: Content-Type
+    value: application/json
+  - key: verif-hash
+    value: "{{flutterwaveWebhookHash}}"
+    description: Must equal FLUTTERWAVE_WEBHOOK_HASH on the server. Set in Flutterwave dashboard → Settings → Webhooks.
+body:
+  type: text
+  content: |-
+    {
+      "event": "charge.completed",
+      "data": {
+        "id": 285959875,
+        "tx_ref": "{{paymentRef}}",
+        "flw_ref": "FLW-MOCK-REF",
+        "amount": 25000,
+        "currency": "NGN",
+        "status": "successful",
+        "customer": {
+          "email": "john@example.com"
+        },
+        "meta": {
+          "userId": "USER_ID_HERE",
+          "type": "PROGRAM",
+          "itemId": "PROGRAM_ID_HERE"
+        }
+      }
+    }
+order: 10000

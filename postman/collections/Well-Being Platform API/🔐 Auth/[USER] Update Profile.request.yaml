@@ -1,0 +1,17 @@
+$kind: http-request
+description: 'Partial update (send at least one field). Allowed: firstName, lastName, email, phone (string or null to clear), timezone (IANA e.g. Africa/Lagos, or null/"" to clear). Changing email sets isEmailVerified false and triggers a verification email; server sets a refreshed auth cookie (browser clients).'
+url: "{{baseUrl}}/api/auth/profile"
+method: PATCH
+headers:
+  Authorization: Bearer {{authToken}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "firstName": "Tinu",
+      "lastName": "Boroni",
+      "phone": "+2348000000000",
+      "timezone": "Africa/Lagos"
+    }
+order: 5000

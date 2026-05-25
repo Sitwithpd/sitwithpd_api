@@ -1,0 +1,17 @@
+$kind: http-request
+description: Partial PATCH — booleans only. autoEnrollment is stored for future use (payments still create purchases as today).
+url: "{{baseUrl}}/api/admin/settings/features"
+method: PATCH
+headers:
+  Authorization: Bearer {{authToken}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "maintenanceMode": false,
+      "allowUserRegistration": true,
+      "requireEmailVerification": true,
+      "autoEnrollment": false
+    }
+order: 7000

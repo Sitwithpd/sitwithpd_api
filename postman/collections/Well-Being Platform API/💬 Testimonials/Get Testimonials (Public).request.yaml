@@ -1,0 +1,7 @@
+$kind: http-request
+description: Published testimonials. Add ?campId={{campId}} to filter by camp.
+url: "{{baseUrl}}/api/testimonials"
+method: GET
+auth:
+  type: noauth
+order: 1000

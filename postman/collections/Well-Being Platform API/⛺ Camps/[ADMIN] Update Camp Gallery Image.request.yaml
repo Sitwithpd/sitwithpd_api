@@ -1,0 +1,15 @@
+$kind: http-request
+description: Admin only. Update caption/order for a gallery image.
+url: "{{baseUrl}}/api/camps/{{campId}}/images/{{campImageId}}"
+method: PATCH
+headers:
+  Authorization: Bearer {{authToken}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "caption": "Walking in nature",
+      "order": 2
+    }
+order: 15000

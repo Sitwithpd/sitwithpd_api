@@ -1,0 +1,15 @@
+$kind: http-request
+description: "Emails **admin Settings → supportEmail**. JSON: `message` (required, 10–4000 chars), `subject` optional (max 200). Sets **Reply-To** to the learner email. Respects **emailNotificationsEnabled** (mailer may no-op). Requires same auth + email verification rules as other dashboard writes."
+url: "{{baseUrl}}/api/dashboard/support/contact"
+method: POST
+headers:
+  Authorization: Bearer {{authToken}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "subject": "Question about my account",
+      "message": "Hello, I need help with my dashboard. Thanks."
+    }
+order: 4000

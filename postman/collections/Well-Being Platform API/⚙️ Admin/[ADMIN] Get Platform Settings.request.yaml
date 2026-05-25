@@ -1,0 +1,11 @@
+$kind: http-request
+description: |-
+  Admin only. Singleton platform config for the dashboard Settings UI: general (name, support email, timezone, currency), features (maintenance, registration, verification, auto-enrollment), and emailNotificationsEnabled.
+  Note: maintenanceMode is stored for the frontend; APIs are not hard-blocked unless you add middleware.
+  Currency enum: NGN | USD | EUR | GBP.
+  enforcements: allowUserRegistration blocks email+Google signup; requireEmailVerification blocks dashboard/program content, payments, camp register, consultations list except admins; emailNotificationsEnabled=false skips outbound mail via sendMail.
+url: "{{baseUrl}}/api/admin/settings"
+method: GET
+headers:
+  Authorization: Bearer {{authToken}}
+order: 5000

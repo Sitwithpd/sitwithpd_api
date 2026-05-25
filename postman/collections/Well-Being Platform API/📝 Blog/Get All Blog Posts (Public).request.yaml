@@ -1,0 +1,23 @@
+$kind: http-request
+description: "Public. Published posts only, newest first; each row includes author { id, firstName, lastName } or null when unset. Optional filters: category, search (or q). Omit page & limit to return the full list (no meta). With page or limit, response includes meta pagination."
+url: "{{baseUrl}}/api/blog?search=&q=&category=&page=&limit="
+method: GET
+queryParams:
+  - key: search
+    value: ""
+    description: optional — case-insensitive match on title or excerpt
+  - key: q
+    value: ""
+    description: alias for search
+  - key: category
+    value: ""
+    description: REFLECTION | WELLBEING | PERSONAL_GROWTH
+  - key: page
+    value: ""
+    description: use with limit — if either is set, response includes meta { total, page, limit, totalPages }
+  - key: limit
+    value: ""
+    description: max 100; default 20 when only page is set
+auth:
+  type: noauth
+order: 1000

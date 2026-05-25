@@ -1,0 +1,27 @@
+$kind: http-request
+description: Flutterwave variant of the program init call — use when Paystack rejects an international card. Server must have FLUTTERWAVE_SECRET_KEY and FLUTTERWAVE_WEBHOOK_HASH set.
+url: "{{baseUrl}}/api/payments/initialize"
+method: POST
+headers:
+  Authorization: Bearer {{authToken}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "type": "PROGRAM",
+      "itemId": "{{programId}}",
+      "provider": "FLUTTERWAVE",
+      "currency": "USD"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      const res = pm.response.json();
+      if (res.data && res.data.reference) {
+        pm.collectionVariables.set('paymentRef', res.data.reference);
+        console.log('Flutterwave tx_ref saved:', res.data.reference);
+        console.log('Redirect user to:', res.data.authorizationUrl);
+      }
+    language: text/javascript
+order: 2000

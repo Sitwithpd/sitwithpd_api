@@ -1,7 +1,0 @@
-$kind: http-request
-description: Admin only. Deletes a tier (registrations keep tierId set null on delete).
-url: "{{baseUrl}}/api/camps/{{campId}}/tiers/{{campTierId}}"
-method: DELETE
-headers:
-  Authorization: Bearer {{authToken}}
-order: 7300

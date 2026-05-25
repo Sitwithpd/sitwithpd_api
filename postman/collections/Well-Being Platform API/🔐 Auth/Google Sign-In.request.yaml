@@ -1,0 +1,27 @@
+$kind: http-request
+description: Send the Google ID token (JWT) from Google Identity Services or the mobile SDK. Set `GOOGLE_CLIENT_ID` in server `.env` to your OAuth Web Client ID. Same response shape as Login.
+url: "{{baseUrl}}/api/auth/google"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "idToken": "PASTE_GOOGLE_ID_TOKEN_HERE"
+    }
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      const res = pm.response.json();
+      if (res.data && res.data.token) {
+        pm.collectionVariables.set('authToken', res.data.token);
+        if (res.data.user && res.data.user.id) {
+          pm.collectionVariables.set('userId', res.data.user.id);
+        }
+        console.log('Token saved:', res.data.token);
+      }
+    language: text/javascript
+order: 3000

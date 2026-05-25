@@ -1,0 +1,16 @@
+$kind: http-request
+description: "Partial PATCH: include at least one of notifyEmail, notifyProgramReminders, notifyPush (booleans). Defaults on new users match the product: email=true, reminders=false, push=true."
+url: "{{baseUrl}}/api/auth/notifications"
+method: PATCH
+headers:
+  Authorization: Bearer {{authToken}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "notifyEmail": true,
+      "notifyProgramReminders": false,
+      "notifyPush": true
+    }
+order: 7000

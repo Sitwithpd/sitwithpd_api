@@ -1,0 +1,7 @@
+$kind: http-request
+description: Requires session cookies from Create Chat Session. Uses `chatSessionId` saved by that request.
+url: "{{baseUrl}}/api/chat/sessions/{{chatSessionId}}"
+method: GET
+auth:
+  type: noauth
+order: 3000

@@ -1,0 +1,18 @@
+$kind: http-request
+description: Admin only. Partial tier update.
+url: "{{baseUrl}}/api/camps/{{campId}}/tiers/{{campTierId}}"
+method: PATCH
+headers:
+  Authorization: Bearer {{authToken}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "label": "Couple",
+      "price": 750,
+      "seatsPerUnit": 2,
+      "isFeatured": true,
+      "order": 1
+    }
+order: 12000

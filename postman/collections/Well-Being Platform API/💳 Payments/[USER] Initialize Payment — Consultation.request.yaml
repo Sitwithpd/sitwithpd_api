@@ -1,0 +1,22 @@
+$kind: http-request
+description: |-
+  Initializes a payment for a consultation booking.
+
+  Optional: provider (PAYSTACK | FLUTTERWAVE), currency (ISO).
+
+  Cal.com → consultation auto-creates the payment using CONSULTATION_PAYMENT_PROVIDER env (PAYSTACK if unset).
+url: "{{baseUrl}}/api/payments/initialize"
+method: POST
+headers:
+  Authorization: Bearer {{authToken}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "type": "CONSULTATION",
+      "itemId": "{{consultationId}}",
+      "provider": "PAYSTACK",
+      "currency": "NGN"
+    }
+order: 5000

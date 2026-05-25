@@ -1,0 +1,17 @@
+$kind: http-request
+description: Partial PATCH — at least one field. defaultTimezone must be valid IANA. currency ∈ NGN, USD, EUR, GBP.
+url: "{{baseUrl}}/api/admin/settings/general"
+method: PATCH
+headers:
+  Authorization: Bearer {{authToken}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "platformName": "Sit With PD",
+      "supportEmail": "support@sitwithpd.com",
+      "defaultTimezone": "Africa/Lagos",
+      "currency": "NGN"
+    }
+order: 6000

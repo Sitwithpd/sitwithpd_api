@@ -1,0 +1,29 @@
+$kind: http-request
+description: Admin only. Creates a participation package. seatsPerUnit consumes camp capacity seats per purchase.
+url: "{{baseUrl}}/api/camps/{{campId}}/tiers"
+method: POST
+headers:
+  Authorization: Bearer {{authToken}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "label": "Individual",
+      "description": "Single attendee",
+      "price": 500,
+      "inclusions": ["Accommodation", "Meals", "Guided sessions", "Community activities", "Reflection materials"],
+      "seatsPerUnit": 1,
+      "maxUnits": null,
+      "order": 0,
+      "isFeatured": false
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      const res = pm.response.json();
+      if (res.data && res.data.id) {
+        pm.collectionVariables.set('campTierId', res.data.id);
+      }
+    language: text/javascript
+order: 11000

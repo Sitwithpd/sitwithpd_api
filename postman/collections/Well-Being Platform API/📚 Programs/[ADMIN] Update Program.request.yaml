@@ -1,0 +1,17 @@
+$kind: http-request
+description: Admin only. Updates any program fields. Set isPublished=true to make it visible to users.
+url: "{{baseUrl}}/api/programs/{{programId}}"
+method: PATCH
+headers:
+  Authorization: Bearer {{authToken}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: title
+      value: Updated Program Title
+    - type: text
+      key: isPublished
+      value: "true"
+      description: Set to true to publish, false to unpublish
+order: 5000

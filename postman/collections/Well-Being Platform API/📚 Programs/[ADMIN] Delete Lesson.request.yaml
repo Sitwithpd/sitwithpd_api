@@ -1,0 +1,7 @@
+$kind: http-request
+description: Admin only. Deletes a specific lesson from a program.
+url: "{{baseUrl}}/api/programs/{{programId}}/lessons/{{lessonId}}"
+method: DELETE
+headers:
+  Authorization: Bearer {{authToken}}
+order: 9000

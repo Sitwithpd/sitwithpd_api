@@ -1,0 +1,43 @@
+$kind: http-request
+description: Admin only. Full PATCH example with title, excerpt, body, slug. Optional authorId row (disabled by default).
+url: "{{baseUrl}}/api/admin/blog/{{blogPostId}}"
+method: PATCH
+headers:
+  Authorization: Bearer {{authToken}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: title
+      value: Learning to Sit With Your Emotions (updated title)
+    - type: text
+      key: excerpt
+      value: Updated excerpt — still about sitting with emotions without rushing to fix them.
+    - type: text
+      key: body
+      value: |-
+        ## Updated
+
+        New content for the article body. Tables, links, etc.
+    - type: text
+      key: slug
+      value: learning-to-sit-with-your-emotions
+    - type: text
+      key: category
+      value: WELLBEING
+    - type: text
+      key: readTimeMinutes
+      value: "8"
+    - type: text
+      key: isPublished
+      value: "true"
+    - type: text
+      key: authorId
+      value: "{{userId}}"
+      description: Optional users.id
+      disabled: true
+    - type: file
+      key: coverImage
+      src:
+        - ""
+order: 9000

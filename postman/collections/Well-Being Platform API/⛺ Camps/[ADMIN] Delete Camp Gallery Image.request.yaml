@@ -1,0 +1,7 @@
+$kind: http-request
+description: Admin only. Deletes a gallery image record.
+url: "{{baseUrl}}/api/camps/{{campId}}/images/{{campImageId}}"
+method: DELETE
+headers:
+  Authorization: Bearer {{authToken}}
+order: 16000

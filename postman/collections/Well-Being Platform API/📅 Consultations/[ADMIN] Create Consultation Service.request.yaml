@@ -1,0 +1,26 @@
+$kind: http-request
+description: Admin only. Creates a new consultation service offering.
+url: "{{baseUrl}}/api/consultations/services"
+method: POST
+headers:
+  Authorization: Bearer {{authToken}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "title": "Personal Wellness Consultation",
+      "description": "A 60-minute one-on-one session focused on your personal wellness journey.",
+      "price": 15000,
+      "duration": 60
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      const res = pm.response.json();
+      if (res.data && res.data.id) {
+        pm.collectionVariables.set('serviceId', res.data.id);
+        console.log('Service ID saved:', res.data.id);
+      }
+    language: text/javascript
+order: 7000

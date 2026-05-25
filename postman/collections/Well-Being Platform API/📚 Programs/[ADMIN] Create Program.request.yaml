@@ -1,0 +1,33 @@
+$kind: http-request
+description: Admin only. Creates a new program. Use form-data to optionally attach a thumbnail image.
+url: "{{baseUrl}}/api/programs"
+method: POST
+headers:
+  Authorization: Bearer {{authToken}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: title
+      value: 30-Day Mindfulness Journey
+    - type: text
+      key: description
+      value: Transform your mental wellness with this structured 30-day program.
+    - type: text
+      key: price
+      value: "25000"
+    - type: file
+      key: thumbnail
+      src:
+        - ""
+      description: "Optional: upload a thumbnail image"
+scripts:
+  - type: afterResponse
+    code: |-
+      const res = pm.response.json();
+      if (res.data && res.data.id) {
+        pm.collectionVariables.set('programId', res.data.id);
+        console.log('Program ID saved:', res.data.id);
+      }
+    language: text/javascript
+order: 4000

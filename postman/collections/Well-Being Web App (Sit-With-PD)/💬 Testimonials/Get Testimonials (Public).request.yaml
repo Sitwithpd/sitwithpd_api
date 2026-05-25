@@ -1,9 +1,0 @@
-$kind: http-request
-description: >-
-  Published testimonials only. Add `?campId={{campId}}` to scope to a camp;
-  call as-is for all published site-wide quotes.
-url: "{{baseUrl}}/api/testimonials"
-method: GET
-auth:
-  type: noauth
-order: 1000

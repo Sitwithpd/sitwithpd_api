@@ -1,0 +1,7 @@
+$kind: http-request
+description: Returns purchases (successful programme purchases include progress rollup), camp registrations (status, paymentExpiresAt, payment.status/amount/createdAt for countdown CTAs), and consultations.
+url: "{{baseUrl}}/api/dashboard"
+method: GET
+headers:
+  Authorization: Bearer {{authToken}}
+order: 1000

@@ -1,8 +1,0 @@
-$kind: http-request
-description: >-
-  Admin only. Loads singleton platform_settings (dashboard Settings page).
-url: "{{baseUrl}}/api/admin/settings"
-method: GET
-headers:
-  Authorization: Bearer {{authToken}}
-order: 2500
