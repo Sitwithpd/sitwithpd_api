@@ -5,9 +5,58 @@ import prisma from '../config/prisma';
 import { getChatSessionCookieName, getChatSessionMaxAgeMs } from '../config/chat';
 import { AppError } from '../middleware/error.middleware';
 import { ChatHistoryMessage } from '../types/chat.types';
-import { buildHttpOnlyCookieOptions } from './cookieOptions';
 
 const GUEST_TOKEN_COOKIE_SUFFIX = '_token';
+const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '::1']);
+
+function isLoopbackHost(host?: string): boolean {
+  if (!host) return false;
+  const normalized = host.split(':')[0].replace(/^\[/, '').replace(/\]$/, '').toLowerCase();
+  return LOOPBACK_HOSTS.has(normalized);
+}
+
+function resolveChatSecure(requestHost?: string): boolean {
+  if (process.env.CHAT_COOKIE_SECURE === 'true') return true;
+  if (process.env.CHAT_COOKIE_SECURE === 'false') return false;
+  if (process.env.NODE_ENV === 'development') return false;
+  if (isLoopbackHost(requestHost)) return false;
+  return process.env.NODE_ENV === 'production';
+}
+
+function resolveChatSameSite(secure: boolean): 'lax' | 'strict' | 'none' {
+  const v = (process.env.CHAT_COOKIE_SAMESITE || 'lax').toLowerCase();
+  if (v === 'none' && !secure) return 'lax';
+  if (v === 'none' || v === 'strict' || v === 'lax') return v;
+  return 'lax';
+}
+
+/** Omit Domain on localhost so Postman and local dev match the request host. */
+function resolveChatDomain(requestHost?: string): string | undefined {
+  if (process.env.NODE_ENV === 'development') return undefined;
+  if (isLoopbackHost(requestHost)) return undefined;
+
+  const domain = process.env.CHAT_COOKIE_DOMAIN?.trim();
+  if (!domain) return undefined;
+
+  const bare = domain.replace(/^\./, '').toLowerCase();
+  if (LOOPBACK_HOSTS.has(bare)) return undefined;
+
+  return domain;
+}
+
+function baseCookieOptions(requestHost?: string): CookieOptions {
+  const secure = resolveChatSecure(requestHost);
+  const opts: CookieOptions = {
+    httpOnly: true,
+    secure,
+    sameSite: resolveChatSameSite(secure),
+    path: '/',
+    maxAge: getChatSessionMaxAgeMs(),
+  };
+  const domain = resolveChatDomain(requestHost);
+  if (domain) opts.domain = domain;
+  return opts;
+}
 
 export function getChatSessionIdCookieName(): string {
   return getChatSessionCookieName();
@@ -23,16 +72,6 @@ export function hashGuestToken(token: string): string {
 
 export function generateGuestToken(): string {
   return crypto.randomBytes(32).toString('hex');
-}
-
-function baseCookieOptions(requestHost?: string): CookieOptions {
-  return buildHttpOnlyCookieOptions({
-    requestHost,
-    explicitDomain: process.env.CHAT_COOKIE_DOMAIN,
-    explicitSecure: process.env.CHAT_COOKIE_SECURE,
-    explicitSameSite: process.env.CHAT_COOKIE_SAMESITE,
-    maxAge: getChatSessionMaxAgeMs(),
-  });
 }
 
 export function setChatSessionCookies(
