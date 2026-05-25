@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Well-Being Platform API",
-    "description": "Complete API collection for the Well-Being Web Platform. \n\n**Setup:**\n1. Set the `baseUrl` variable to your server (default: http://localhost:5000)\n2. Run **Register** or **Login** first — the token auto-saves to `authToken`\n3. All protected routes automatically use the saved token via collection-level auth\n4. **Blog:** Optional multipart field **authorId** (`users.id`); omit on create to default author to the authenticated admin. Optional **author** / **authorDisplayName** for public byline text. Responses include **authorDisplayName**, **author** `{ id, firstName, lastName } | null`, and **authorId**. **Login** / **Register** save **userId** when `data.user.id` is present. **Create** / **Create (Draft)** test scripts save `blogPostId` and `blogSlug`. Admin update/delete and **Get by ID (admin)** use `blogPostId`. Public **Get by Slug** uses `blogSlug`.\n5. **Admin list GETs** (users, programs, blog, payments, consultations, testimonials admin, camp participants, Cal event types): use `?page=1&limit=20` (limit max 100). **Get All Users** accepts optional `?search=` (first name, last name, email). **Get All Consultations** accepts optional `?search=` (user name/email, service title) and optional `?status=` (`PENDING`, `PENDING_PAYMENT`, `CONFIRMED`, `CANCELLED`, `COMPLETED`). **Get All Programs** — public `GET /api/programs` and admin `GET /api/programs/admin/all` — accepts optional `?search=` (title, description) and optional `?category=` (`LEADERS`, `STUDENTS`, `PROFESSIONALS`). Public list is unpaginated `{ data }`; admin list is paginated `{ data, meta }`. **Newsletter:** `POST /api/newsletter/subscribe` (JSON: `email`, optional `source`) stores locally and syncs to Resend Contacts when `RESEND_API_KEY` is set; optional comma-separated `RESEND_NEWSLETTER_SEGMENT_IDS`. `GET /api/newsletter/unsubscribe?token=` — browser redirect to `CLIENT_URL` query flags; `?format=json` or `Accept: application/json` returns JSON. **Admin:** `GET /api/admin/newsletter/subscriptions` — paginated (`page`, `limit`), optional `search` (email/source), optional `status` (`all`|`active`|`unsubscribed`); excludes `unsubscribeToken` from rows. **Programmes (learner progress):** `GET /api/dashboard` includes `progress` on each purchased programme (`payment` SUCCESS). `GET /api/dashboard/programs/:id` merges `completedAt` on modules plus `progress`. `POST /api/dashboard/programs/:programId/modules/:moduleId/complete` records module completion when the learner finishes — idempotent.\n\n**Seeded Admin:**\n- Email: admin@wellbeing.com\n- Password: Admin@1234",
+    "description": "Complete API collection for the Well-Being Web Platform. \n\n**Setup:**\n1. Set the `baseUrl` variable to your server (default: http://localhost:5000)\n2. Run **Register** or **Login** first — the token auto-saves to `authToken`\n3. All protected routes automatically use the saved token via collection-level auth\n4. **Blog:** Optional multipart field **authorId** (`users.id`); omit on create to default author to the authenticated admin. Optional **author** / **authorDisplayName** for public byline text. Responses include **authorDisplayName**, **author** `{ id, firstName, lastName } | null`, and **authorId**. **Login** / **Register** save **userId** when `data.user.id` is present. **Create** / **Create (Draft)** test scripts save `blogPostId` and `blogSlug`. Admin update/delete and **Get by ID (admin)** use `blogPostId`. Public **Get by Slug** uses `blogSlug`.\n5. **Admin list GETs** (users, programs, blog, payments, consultations, testimonials admin, camp participants, Cal event types): use `?page=1&limit=20` (limit max 100). **Get All Users** accepts optional `?search=` (first name, last name, email). **Get All Consultations** accepts optional `?search=` (user name/email, service title) and optional `?status=` (`PENDING`, `PENDING_PAYMENT`, `CONFIRMED`, `CANCELLED`, `COMPLETED`). **Get All Programs** — public `GET /api/programs` and admin `GET /api/programs/admin/all` — accepts optional `?search=` (title, description) and optional `?category=` (`LEADERS`, `STUDENTS`, `PROFESSIONALS`). Public list is unpaginated `{ data }`; admin list is paginated `{ data, meta }`. **Newsletter:** `POST /api/newsletter/subscribe` (JSON: `email`, optional `source`) stores locally and syncs to Resend Contacts when `RESEND_API_KEY` is set; optional comma-separated `RESEND_NEWSLETTER_SEGMENT_IDS`. `GET /api/newsletter/unsubscribe?token=` — browser redirect to `CLIENT_URL` query flags; `?format=json` or `Accept: application/json` returns JSON. **Admin:** `GET /api/admin/newsletter/subscriptions` — paginated (`page`, `limit`), optional `search` (email/source), optional `status` (`all`|`active`|`unsubscribed`); excludes `unsubscribeToken` from rows. **Programmes (learner progress):** `GET /api/dashboard` includes `progress` on each purchased programme (`payment` SUCCESS). `GET /api/dashboard/programs/:id` merges `completedAt` on modules plus `progress`. `POST /api/dashboard/programs/:programId/modules/:moduleId/complete` records module completion when the learner finishes — idempotent.\n6. **Chat:** `GET /api/chat/config` returns intro, disclaimers, and suggested prompts for the widget. Run **Create Chat Session** first — saves `chatSessionId` and sets httpOnly session cookies (enable Postman cookie jar). Then **Send Chat Message** (`stream: false` for JSON; set `stream: true` with `Accept: text/event-stream` for SSE when enabled). Admin: run **Reindex Chat Knowledge** after deploy (`npm run chat:reindex`) so RAG has indexed content.\n\n**Seeded Admin:**\n- Email: admin@wellbeing.com\n- Password: Admin@1234",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -34,7 +34,8 @@
     { "key": "blogPostId", "value": "", "type": "string" },
     { "key": "blogSlug", "value": "learning-to-sit-with-your-emotions", "type": "string" },
     { "key": "newsletterUnsubscribeToken", "value": "", "type": "string" },
-    { "key": "contactSubmissionId", "value": "", "type": "string" }
+    { "key": "contactSubmissionId", "value": "", "type": "string" },
+    { "key": "chatSessionId", "value": "", "type": "string" }
   ],
   "item": [
 
@@ -1642,6 +1643,113 @@
               "raw": "{\n  \"subject\": \"Question about this week\",\n  \"message\": \"Hi, could you clarify the assignment for week 3? Thank you.\"\n}"
             },
             "description": "Emails the program’s **facilitatorEmail** (set in admin program form). Requires an active **purchase** with successful payment. Same body rules as Contact support. Returns **400** if facilitator email is missing — UI can fall back to Contact support."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "💬 Chat",
+      "item": [
+        {
+          "name": "Get Chat Config (Public)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/chat/config",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "chat", "config"]
+            },
+            "description": "Public widget bootstrap — intro, disclaimers, suggested prompts, and streaming flag."
+          }
+        },
+        {
+          "name": "Create Chat Session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data.sessionId) {",
+                  "  pm.collectionVariables.set('chatSessionId', res.data.sessionId);",
+                  "  console.log('Chat session saved:', res.data.sessionId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/chat/sessions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "chat", "sessions"]
+            },
+            "description": "Creates a chat session and sets httpOnly cookies `chat_session` and `chat_session_token`. Enable Postman cookie jar for follow-up requests. Saves `chatSessionId` from the response."
+          }
+        },
+        {
+          "name": "Get Chat Session History",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/chat/sessions/{{chatSessionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "chat", "sessions", "{{chatSessionId}}"]
+            },
+            "description": "Requires session cookies from Create Chat Session. Uses `chatSessionId` saved by that request."
+          }
+        },
+        {
+          "name": "Send Chat Message",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"What programs do you offer?\",\n  \"stream\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/chat/sessions/{{chatSessionId}}/messages",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "chat", "sessions", "{{chatSessionId}}", "messages"]
+            },
+            "description": "Send a user message (JSON response). Requires session cookies from Create Chat Session. Run `npm run chat:reindex` after deploy so RAG has indexed content."
+          }
+        },
+        {
+          "name": "[ADMIN] Reindex Chat Knowledge",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/chat/reindex",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "chat", "reindex"]
+            },
+            "description": "Full rebuild of chat knowledge index (programs, camps, consultations, blogs, testimonials, platform policy doc). Requires admin JWT."
+          }
+        },
+        {
+          "name": "[ADMIN] Get Chat Stats",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/chat/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "chat", "stats"]
+            },
+            "description": "Chunk counts, last indexed time, and month-to-date OpenAI usage estimate."
           }
         }
       ]
