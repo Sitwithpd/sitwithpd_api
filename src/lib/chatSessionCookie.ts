@@ -5,20 +5,9 @@ import prisma from '../config/prisma';
 import { getChatSessionCookieName, getChatSessionMaxAgeMs } from '../config/chat';
 import { AppError } from '../middleware/error.middleware';
 import { ChatHistoryMessage } from '../types/chat.types';
+import { buildHttpOnlyCookieOptions } from './cookieOptions';
 
 const GUEST_TOKEN_COOKIE_SUFFIX = '_token';
-
-function resolveSecure(): boolean {
-  if (process.env.CHAT_COOKIE_SECURE === 'true') return true;
-  if (process.env.CHAT_COOKIE_SECURE === 'false') return false;
-  return process.env.NODE_ENV === 'production';
-}
-
-function resolveSameSite(): 'lax' | 'strict' | 'none' {
-  const v = (process.env.CHAT_COOKIE_SAMESITE || 'lax').toLowerCase();
-  if (v === 'none' || v === 'strict' || v === 'lax') return v;
-  return 'lax';
-}
 
 export function getChatSessionIdCookieName(): string {
   return getChatSessionCookieName();
@@ -36,26 +25,29 @@ export function generateGuestToken(): string {
   return crypto.randomBytes(32).toString('hex');
 }
 
-function baseCookieOptions(): CookieOptions {
-  const opts: CookieOptions = {
-    httpOnly: true,
-    secure: resolveSecure(),
-    sameSite: resolveSameSite(),
-    path: '/',
+function baseCookieOptions(requestHost?: string): CookieOptions {
+  return buildHttpOnlyCookieOptions({
+    requestHost,
+    explicitDomain: process.env.CHAT_COOKIE_DOMAIN,
+    explicitSecure: process.env.CHAT_COOKIE_SECURE,
+    explicitSameSite: process.env.CHAT_COOKIE_SAMESITE,
     maxAge: getChatSessionMaxAgeMs(),
-  };
-  const domain = process.env.CHAT_COOKIE_DOMAIN?.trim();
-  if (domain) opts.domain = domain;
-  return opts;
+  });
 }
 
-export function setChatSessionCookies(res: Response, sessionId: string, guestToken: string): void {
-  res.cookie(getChatSessionIdCookieName(), sessionId, baseCookieOptions());
-  res.cookie(getChatGuestTokenCookieName(), guestToken, baseCookieOptions());
+export function setChatSessionCookies(
+  res: Response,
+  sessionId: string,
+  guestToken: string,
+  requestHost?: string
+): void {
+  const opts = baseCookieOptions(requestHost);
+  res.cookie(getChatSessionIdCookieName(), sessionId, opts);
+  res.cookie(getChatGuestTokenCookieName(), guestToken, opts);
 }
 
-export function clearChatSessionCookies(res: Response): void {
-  const { maxAge: _m, ...base } = baseCookieOptions();
+export function clearChatSessionCookies(res: Response, requestHost?: string): void {
+  const { maxAge: _m, ...base } = baseCookieOptions(requestHost);
   res.clearCookie(getChatSessionIdCookieName(), base);
   res.clearCookie(getChatGuestTokenCookieName(), base);
 }

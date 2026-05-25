@@ -106,7 +106,7 @@ export const createChatSessionHandler = catchAsync(async (req: ChatRequest, res:
   const userId = req.user?.id ?? null;
   const { session, guestToken } = await createChatSession(userId);
 
-  setChatSessionCookies(res, session.id, guestToken);
+  setChatSessionCookies(res, session.id, guestToken, req.hostname);
 
   res.status(201).json({
     success: true,

@@ -74,7 +74,7 @@ export const register = catchAsync(async (req: Request, res: Response) => {
   await sendEmailVerificationEmail(user.email, user.firstName, verificationToken);
 
   const token = signToken(user.id, user.email, user.role);
-  res.cookie(ACCESS_TOKEN_COOKIE, token, authCookieOptions());
+  res.cookie(ACCESS_TOKEN_COOKIE, token, authCookieOptions(req.hostname));
 
   res.status(201).json({
     success: true,
@@ -98,7 +98,7 @@ export const login = catchAsync(async (req: Request, res: Response) => {
   if (!isMatch) throw new AppError('Invalid email or password.', 401);
 
   const token = signToken(user.id, user.email, user.role);
-  res.cookie(ACCESS_TOKEN_COOKIE, token, authCookieOptions());
+  res.cookie(ACCESS_TOKEN_COOKIE, token, authCookieOptions(req.hostname));
 
   res.json({
     success: true,
@@ -170,7 +170,7 @@ export const googleAuth = catchAsync(async (req: Request, res: Response) => {
   }
 
   const token = signToken(user.id, user.email, user.role);
-  res.cookie(ACCESS_TOKEN_COOKIE, token, authCookieOptions());
+  res.cookie(ACCESS_TOKEN_COOKIE, token, authCookieOptions(req.hostname));
 
   res.json({
     success: true,
@@ -298,8 +298,8 @@ export const resetPassword = catchAsync(async (req: Request, res: Response) => {
 });
 
 // ── Logout — clear httpOnly auth cookie ───────────────────────────────────────
-export const logout = catchAsync(async (_req: Request, res: Response) => {
-  clearAuthCookie(res);
+export const logout = catchAsync(async (req: Request, res: Response) => {
+  clearAuthCookie(res, req.hostname);
   res.json({ success: true, message: 'Logged out.' });
 });
 
@@ -435,7 +435,7 @@ export const updateProfile = catchAsync(async (req: AuthRequest, res: Response) 
 
   if (emailChanged) {
     const token = signToken(user.id, user.email, user.role);
-    res.cookie(ACCESS_TOKEN_COOKIE, token, authCookieOptions());
+    res.cookie(ACCESS_TOKEN_COOKIE, token, authCookieOptions(req.hostname));
   }
 
   const message =
