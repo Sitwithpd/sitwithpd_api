@@ -477,10 +477,27 @@ export const updateCamp = catchAsync(async (req: AuthRequest, res: Response) => 
 });
 
 // DELETE /api/camps/:id — Deletes camp; cascades tiers, images, registrations.
-// Payments on camp registrations retain rows with campRegistrationId nulled (FK SET NULL).
+// Blocked when CONFIRMED or PENDING_PAYMENT registrations exist (EXPIRED/CANCELLED do not block).
+// Payments on deleted camp registrations retain rows with campRegistrationId nulled (FK SET NULL).
 // Testimonials tied to this camp: campId → null (already onDelete SetNull).
 export const deleteCamp = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
+
+  const blockingRegistrations = await prisma.campRegistration.count({
+    where: {
+      campId: id,
+      status: {
+        in: [CampRegistrationStatus.CONFIRMED, CampRegistrationStatus.PENDING_PAYMENT],
+      },
+    },
+  });
+  if (blockingRegistrations > 0) {
+    throw new AppError(
+      'This camp cannot be deleted because it has confirmed registrations or registrations awaiting payment.',
+      409
+    );
+  }
+
   try {
     await prisma.camp.delete({ where: { id } });
   } catch (e) {
