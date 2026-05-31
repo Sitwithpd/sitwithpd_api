@@ -10,8 +10,6 @@ body:
     {
       "idToken": "PASTE_GOOGLE_ID_TOKEN_HERE"
     }
-auth:
-  type: noauth
 scripts:
   - type: afterResponse
     code: |-

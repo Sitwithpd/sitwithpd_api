@@ -2,6 +2,4 @@ $kind: http-request
 description: Returns program details and lesson titles (no video URLs until purchased).
 url: "{{baseUrl}}/api/programs/{{programId}}"
 method: GET
-auth:
-  type: noauth
 order: 2000

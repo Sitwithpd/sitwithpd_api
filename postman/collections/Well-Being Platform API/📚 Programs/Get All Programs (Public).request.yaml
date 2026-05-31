@@ -9,6 +9,4 @@ queryParams:
   - key: category
     value: ""
     description: LEADERS | STUDENTS | PROFESSIONALS
-auth:
-  type: noauth
 order: 1000

@@ -13,8 +13,6 @@ body:
       "email": "john@example.com",
       "password": "Password123"
     }
-auth:
-  type: noauth
 scripts:
   - type: afterResponse
     code: |-

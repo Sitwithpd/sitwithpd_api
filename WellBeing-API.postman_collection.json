@@ -4,16 +4,6 @@
     "description": "Complete API collection for the Well-Being Web Platform. \n\n**Setup:**\n1. Set the `baseUrl` variable to your server (default: http://localhost:5000)\n2. Run **Register** or **Login** first — the token auto-saves to `authToken`\n3. All protected routes automatically use the saved token via collection-level auth\n4. **Blog:** Optional multipart field **authorId** (`users.id`); omit on create to default author to the authenticated admin. Optional **author** / **authorDisplayName** for public byline text. Responses include **authorDisplayName**, **author** `{ id, firstName, lastName } | null`, and **authorId**. **Login** / **Register** save **userId** when `data.user.id` is present. **Create** / **Create (Draft)** test scripts save `blogPostId` and `blogSlug`. Admin update/delete and **Get by ID (admin)** use `blogPostId`. Public **Get by Slug** uses `blogSlug`.\n5. **Admin list GETs** (users, programs, blog, payments, consultations, testimonials admin, camp participants, Cal event types): use `?page=1&limit=20` (limit max 100). **Get All Users** accepts optional `?search=` (first name, last name, email). **Get All Consultations** accepts optional `?search=` (user name/email, service title) and optional `?status=` (`PENDING`, `PENDING_PAYMENT`, `CONFIRMED`, `CANCELLED`, `COMPLETED`). **Get All Programs** — public `GET /api/programs` and admin `GET /api/programs/admin/all` — accepts optional `?search=` (title, description) and optional `?category=` (`LEADERS`, `STUDENTS`, `PROFESSIONALS`). Public list is unpaginated `{ data }`; admin list is paginated `{ data, meta }`. **Newsletter:** `POST /api/newsletter/subscribe` (JSON: `email`, optional `source`) stores locally and syncs to Resend Contacts when `RESEND_API_KEY` is set; optional comma-separated `RESEND_NEWSLETTER_SEGMENT_IDS`. `GET /api/newsletter/unsubscribe?token=` — browser redirect to `CLIENT_URL` query flags; `?format=json` or `Accept: application/json` returns JSON. **Admin:** `GET /api/admin/newsletter/subscriptions` — paginated (`page`, `limit`), optional `search` (email/source), optional `status` (`all`|`active`|`unsubscribed`); excludes `unsubscribeToken` from rows. **Programmes (learner progress):** `GET /api/dashboard` includes `progress` on each purchased programme (`payment` SUCCESS). `GET /api/dashboard/programs/:id` merges `completedAt` on modules plus `progress`. `POST /api/dashboard/programs/:programId/modules/:moduleId/complete` records module completion when the learner finishes — idempotent.\n6. **Chat:** `GET /api/chat/config` returns intro, disclaimers, and suggested prompts for the widget. Run **Create Chat Session** first — saves `chatSessionId` and sets httpOnly session cookies (enable Postman cookie jar). Then **Send Chat Message** (`stream: false` for JSON; set `stream: true` with `Accept: text/event-stream` for SSE when enabled). Admin: run **Reindex Chat Knowledge** after deploy (`npm run chat:reindex`) so RAG has indexed content.\n\n**Seeded Admin:**\n- Email: admin@wellbeing.com\n- Password: Admin@1234",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
-  "auth": {
-    "type": "bearer",
-    "bearer": [
-      {
-        "key": "token",
-        "value": "{{authToken}}",
-        "type": "string"
-      }
-    ]
-  },
   "variable": [
     { "key": "baseUrl", "value": "http://localhost:5000", "type": "string" },
     { "key": "authToken", "value": "", "type": "string" },
@@ -45,7 +35,6 @@
         {
           "name": "Health Check",
           "request": {
-            "auth": { "type": "noauth", "noauth": [] },
             "method": "GET",
             "url": { "raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"] },
             "description": "Verify the server is running."
@@ -60,7 +49,6 @@
         {
           "name": "[Public] Newsletter Subscribe",
           "request": {
-            "auth": { "type": "noauth", "noauth": [] },
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
@@ -78,7 +66,6 @@
         {
           "name": "[Public] Newsletter Unsubscribe (JSON)",
           "request": {
-            "auth": { "type": "noauth", "noauth": [] },
             "method": "GET",
             "header": [{ "key": "Accept", "value": "application/json" }],
             "url": {
@@ -121,7 +108,6 @@
         {
           "name": "[Public] Submit Contact Form",
           "request": {
-            "auth": { "type": "noauth", "noauth": [] },
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
@@ -194,7 +180,6 @@
             }
           ],
           "request": {
-            "auth": { "type": "noauth", "noauth": [] },
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api", "auth", "register"] },
@@ -226,7 +211,6 @@
             }
           ],
           "request": {
-            "auth": { "type": "noauth", "noauth": [] },
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "auth", "login"] },
@@ -258,7 +242,6 @@
             }
           ],
           "request": {
-            "auth": { "type": "noauth", "noauth": [] },
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": { "raw": "{{baseUrl}}/api/auth/google", "host": ["{{baseUrl}}"], "path": ["api", "auth", "google"] },
@@ -329,7 +312,6 @@
         {
           "name": "Verify Email",
           "request": {
-            "auth": { "type": "noauth", "noauth": [] },
             "method": "GET",
             "url": {
               "raw": "{{baseUrl}}/api/auth/verify-email?token={{verifyToken}}",
@@ -352,7 +334,6 @@
         {
           "name": "Forgot Password",
           "request": {
-            "auth": { "type": "noauth", "noauth": [] },
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": { "raw": "{{baseUrl}}/api/auth/forgot-password", "host": ["{{baseUrl}}"], "path": ["api", "auth", "forgot-password"] },
@@ -366,7 +347,6 @@
         {
           "name": "Reset Password",
           "request": {
-            "auth": { "type": "noauth", "noauth": [] },
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "url": { "raw": "{{baseUrl}}/api/auth/reset-password", "host": ["{{baseUrl}}"], "path": ["api", "auth", "reset-password"] },
@@ -386,7 +366,6 @@
         {
           "name": "Get All Programs (Public)",
           "request": {
-            "auth": { "type": "noauth", "noauth": [] },
             "method": "GET",
             "url": {
               "raw": "{{baseUrl}}/api/programs?search=&category=",
@@ -403,7 +382,6 @@
         {
           "name": "Get Program by ID (Public)",
           "request": {
-            "auth": { "type": "noauth", "noauth": [] },
             "method": "GET",
             "url": { "raw": "{{baseUrl}}/api/programs/{{programId}}", "host": ["{{baseUrl}}"], "path": ["api", "programs", "{{programId}}"] },
             "description": "Returns program details and lesson titles (no video URLs until purchased)."
@@ -555,7 +533,6 @@
         {
           "name": "Get All Camps (Public)",
           "request": {
-            "auth": { "type": "noauth", "noauth": [] },
             "method": "GET",
             "url": { "raw": "{{baseUrl}}/api/camps", "host": ["{{baseUrl}}"], "path": ["api", "camps"] },
             "description": "Returns all upcoming and ongoing camps. No auth required. Each camp includes tiers, gallery images, published testimonials, benefits, seatsTaken, and seatsRemaining."
@@ -609,7 +586,6 @@
             }
           ],
           "request": {
-            "auth": { "type": "noauth", "noauth": [] },
             "method": "GET",
             "url": { "raw": "{{baseUrl}}/api/camps/current", "host": ["{{baseUrl}}"], "path": ["api", "camps", "current"] },
             "description": "Next upcoming camp (earliest UPCOMING) for the landing page. Test script saves campId and first campTierId when present."
@@ -632,7 +608,6 @@
             }
           ],
           "request": {
-            "auth": { "type": "noauth", "noauth": [] },
             "method": "GET",
             "url": { "raw": "{{baseUrl}}/api/camps/{{campId}}", "host": ["{{baseUrl}}"], "path": ["api", "camps", "{{campId}}"] },
             "description": "Returns full camp details including tiers, images, published testimonials, benefits, seatsTaken, and seatsRemaining."
@@ -892,7 +867,6 @@
         {
           "name": "Get Testimonials (Public)",
           "request": {
-            "auth": { "type": "noauth", "noauth": [] },
             "method": "GET",
             "url": { "raw": "{{baseUrl}}/api/testimonials", "host": ["{{baseUrl}}"], "path": ["api", "testimonials"] },
             "description": "Published testimonials. Add ?campId={{campId}} to filter by camp."
@@ -901,7 +875,6 @@
         {
           "name": "Get Testimonial by ID (Public)",
           "request": {
-            "auth": { "type": "noauth", "noauth": [] },
             "method": "GET",
             "url": { "raw": "{{baseUrl}}/api/testimonials/{{testimonialId}}", "host": ["{{baseUrl}}"], "path": ["api", "testimonials", "{{testimonialId}}"] },
             "description": "Single testimonial by id."
@@ -995,7 +968,6 @@
         {
           "name": "Get All Blog Posts (Public)",
           "request": {
-            "auth": { "type": "noauth", "noauth": [] },
             "method": "GET",
             "url": {
               "raw": "{{baseUrl}}/api/blog?search=&category=&page=&limit=",
@@ -1015,7 +987,6 @@
         {
           "name": "Get Blog Posts by Category (Public)",
           "request": {
-            "auth": { "type": "noauth", "noauth": [] },
             "method": "GET",
             "url": {
               "raw": "{{baseUrl}}/api/blog?category=WELLBEING",
@@ -1029,7 +1000,6 @@
         {
           "name": "Get Blog Post by Slug (Public)",
           "request": {
-            "auth": { "type": "noauth", "noauth": [] },
             "method": "GET",
             "url": { "raw": "{{baseUrl}}/api/blog/{{blogSlug}}", "host": ["{{baseUrl}}"], "path": ["api", "blog", "{{blogSlug}}"] },
             "description": "Public. One published post by slug (full body). Includes nested author when linked. 404 if draft. Uses collection variable blogSlug (set by Create requests)."
@@ -1239,7 +1209,6 @@
         {
           "name": "Get All Services (Public)",
           "request": {
-            "auth": { "type": "noauth", "noauth": [] },
             "method": "GET",
             "url": { "raw": "{{baseUrl}}/api/consultations/services", "host": ["{{baseUrl}}"], "path": ["api", "consultations", "services"] },
             "description": "Returns all active consultation services. No auth required."
@@ -1248,7 +1217,6 @@
         {
           "name": "Get Service by ID (Public)",
           "request": {
-            "auth": { "type": "noauth", "noauth": [] },
             "method": "GET",
             "url": { "raw": "{{baseUrl}}/api/consultations/services/{{serviceId}}", "host": ["{{baseUrl}}"], "path": ["api", "consultations", "services", "{{serviceId}}"] },
             "description": "Returns a single consultation service detail."
@@ -1513,7 +1481,6 @@
         {
           "name": "Verify Payment",
           "request": {
-            "auth": { "type": "noauth", "noauth": [] },
             "method": "GET",
             "url": { "raw": "{{baseUrl}}/api/payments/verify/{{paymentRef}}", "host": ["{{baseUrl}}"], "path": ["api", "payments", "verify", "{{paymentRef}}"] },
             "description": "Check the status of a payment by its reference. Called by the frontend after Paystack redirects back."
@@ -1654,7 +1621,6 @@
         {
           "name": "Get Chat Config (Public)",
           "request": {
-            "auth": { "type": "noauth", "noauth": [] },
             "method": "GET",
             "header": [],
             "url": {
@@ -1683,7 +1649,6 @@
             }
           ],
           "request": {
-            "auth": { "type": "noauth", "noauth": [] },
             "method": "POST",
             "header": [],
             "url": {
@@ -1697,7 +1662,6 @@
         {
           "name": "Get Chat Session History",
           "request": {
-            "auth": { "type": "noauth", "noauth": [] },
             "method": "GET",
             "header": [],
             "url": {
@@ -1711,7 +1675,6 @@
         {
           "name": "Send Chat Message",
           "request": {
-            "auth": { "type": "noauth", "noauth": [] },
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {

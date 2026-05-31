@@ -18,6 +18,4 @@ queryParams:
   - key: limit
     value: ""
     description: max 100; default 20 when only page is set
-auth:
-  type: noauth
 order: 1000

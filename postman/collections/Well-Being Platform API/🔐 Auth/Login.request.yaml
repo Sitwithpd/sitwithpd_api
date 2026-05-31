@@ -11,8 +11,6 @@ body:
       "email": "admin@wellbeing.com",
       "password": "Admin@1234"
     }
-auth:
-  type: noauth
 scripts:
   - type: afterResponse
     code: |-

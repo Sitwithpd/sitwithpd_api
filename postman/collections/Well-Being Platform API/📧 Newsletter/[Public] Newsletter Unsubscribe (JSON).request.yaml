@@ -10,6 +10,4 @@ queryParams:
     description: From DB newsletter_subscriptions.unsubscribeToken after subscribe.
   - key: format
     value: json
-auth:
-  type: noauth
 order: 2000

@@ -13,6 +13,4 @@ body:
       "phone": "+447359307733",
       "message": "I'd like to learn more about your annual camping programme."
     }
-auth:
-  type: noauth
 order: 1000

@@ -2,6 +2,4 @@ $kind: http-request
 description: Public. One published post by slug (full body). Includes nested author when linked. 404 if draft. Uses collection variable blogSlug (set by Create requests).
 url: "{{baseUrl}}/api/blog/{{blogSlug}}"
 method: GET
-auth:
-  type: noauth
 order: 3000

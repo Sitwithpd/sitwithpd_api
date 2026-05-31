@@ -2,8 +2,6 @@ $kind: http-request
 description: Next upcoming camp (earliest UPCOMING) for the landing page. Test script saves campId and first campTierId when present.
 url: "{{baseUrl}}/api/camps/current"
 method: GET
-auth:
-  type: noauth
 scripts:
   - type: afterResponse
     code: |-

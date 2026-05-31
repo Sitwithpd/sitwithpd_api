@@ -2,10 +2,13 @@ workspace:
   id: b30b1b35-658f-4cb9-aebe-b1d9c1c41a0b
 
 localResources:
-  collections: []
+  collections:
+    - ../postman/collections/Well-Being Platform API
   environments:
     - ../postman/environments/Local.environment.yaml
     - ../postman/environments/render_cloud.environment.yaml
+  docs:
+    - ..\src\data\chatPlatformKnowledge.md
 
 # Each entry here maps a local resource to one or more corresponding objects in Postman Cloud
 
@@ -15,5 +18,3 @@ cloudResources:
     ..\postman\environments\render_cloud.environment.yaml: 28053693-f9c34e0f-4f98-49d0-9e8e-498f1cef89e0
     ../postman/environments/Local.environment.yaml: 28053693-56e6857c-3fde-4afd-8ae5-5fe0f8856b7c
     ../postman/environments/render_cloud.environment.yaml: 28053693-f9c34e0f-4f98-49d0-9e8e-498f1cef89e0
-  collections:
-    ..\postman\collections\Well-Being Platform API: faa650d8-82ac-42f9-8f8e-1e04aac9529e

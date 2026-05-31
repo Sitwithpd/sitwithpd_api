@@ -11,6 +11,4 @@ body:
       "message": "What programs do you offer?",
       "stream": false
     }
-auth:
-  type: noauth
 order: 4000

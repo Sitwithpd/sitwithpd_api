@@ -5,7 +5,7 @@ description: |-
   **Setup:**
   1. Set the `baseUrl` variable to your server (default: http://localhost:5000)
   2. Run **Register** or **Login** first — the token auto-saves to `authToken`
-  3. All protected routes automatically use the saved token via collection-level auth
+  3. Protected routes use `Authorization: Bearer {{authToken}}` on each request (run Login first)
   4. **Blog:** Optional multipart field **authorId** (`users.id`); omit on create to default author to the authenticated admin. Optional **author** / **authorDisplayName** for public byline text. Responses include **authorDisplayName**, **author** `{ id, firstName, lastName } | null`, and **authorId**. **Login** / **Register** save **userId** when `data.user.id` is present. **Create** / **Create (Draft)** test scripts save `blogPostId` and `blogSlug`. Admin update/delete and **Get by ID (admin)** use `blogPostId`. Public **Get by Slug** uses `blogSlug`.
   5. **Admin list GETs** (users, programs, blog, payments, consultations, testimonials admin, camp participants, Cal event types): use `?page=1&limit=20` (limit max 100). **Get All Users** accepts optional `?search=` (first name, last name, email). **Get All Consultations** accepts optional `?search=` (user name/email, service title) and optional `?status=` (`PENDING`, `PENDING_PAYMENT`, `CONFIRMED`, `CANCELLED`, `COMPLETED`). **Get All Programs** — public `GET /api/programs` and admin `GET /api/programs/admin/all` — accepts optional `?search=` (title, description) and optional `?category=` (`LEADERS`, `STUDENTS`, `PROFESSIONALS`). Public list is unpaginated `{ data }`; admin list is paginated `{ data, meta }`. **Newsletter:** `POST /api/newsletter/subscribe` (JSON: `email`, optional `source`) stores locally and syncs to Resend Contacts when `RESEND_API_KEY` is set; optional comma-separated `RESEND_NEWSLETTER_SEGMENT_IDS`. `GET /api/newsletter/unsubscribe?token=` — browser redirect to `CLIENT_URL` query flags; `?format=json` or `Accept: application/json` returns JSON. **Admin:** `GET /api/admin/newsletter/subscriptions` — paginated (`page`, `limit`), optional `search` (email/source), optional `status` (`all`|`active`|`unsubscribed`); excludes `unsubscribeToken` from rows. **Programmes (learner progress):** `GET /api/dashboard` includes `progress` on each purchased programme (`payment` SUCCESS). `GET /api/dashboard/programs/:id` merges `completedAt` on modules plus `progress`. `POST /api/dashboard/programs/:programId/modules/:moduleId/complete` records module completion when the learner finishes — idempotent.
   6. **Chat:** `GET /api/chat/config` returns intro, disclaimers, and suggested prompts for the widget. Run **Create Chat Session** first — saves `chatSessionId` and sets httpOnly session cookies (enable Postman cookie jar). Then **Send Chat Message** (`stream: false` for JSON; set `stream: true` with `Accept: text/event-stream` for SSE when enabled). Admin: run **Reindex Chat Knowledge** after deploy (`npm run chat:reindex`) so RAG has indexed content.
@@ -35,9 +35,3 @@ variables:
   newsletterUnsubscribeToken: ""
   contactSubmissionId: ""
   chatSessionId: ""
-auth:
-  - id: 1319352b-e590-4963-9bab-7fcbe24de0c4
-    type: bearer
-    name: bearer auth
-    credentials:
-      token: "{{authToken}}"

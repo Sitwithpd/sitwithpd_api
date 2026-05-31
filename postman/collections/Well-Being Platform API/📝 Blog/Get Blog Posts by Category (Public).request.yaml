@@ -4,6 +4,4 @@ url: "{{baseUrl}}/api/blog?category=WELLBEING"
 method: GET
 queryParams:
   category: WELLBEING
-auth:
-  type: noauth
 order: 2000

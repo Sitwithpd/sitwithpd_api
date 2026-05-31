@@ -2,8 +2,6 @@ $kind: http-request
 description: Returns full camp details including tiers, images, published testimonials, benefits, seatsTaken, and seatsRemaining.
 url: "{{baseUrl}}/api/camps/{{campId}}"
 method: GET
-auth:
-  type: noauth
 scripts:
   - type: afterResponse
     code: |-

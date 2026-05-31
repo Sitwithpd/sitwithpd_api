@@ -4,6 +4,4 @@ url: "{{baseUrl}}/api/auth/verify-email?token={{verifyToken}}"
 method: GET
 queryParams:
   token: "{{verifyToken}}"
-auth:
-  type: noauth
 order: 8000

@@ -11,6 +11,4 @@ body:
       "email": "newsletter@example.com",
       "source": "footer"
     }
-auth:
-  type: noauth
 order: 1000
