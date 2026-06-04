@@ -1,4 +1,5 @@
 $kind: collection
+name: Well-Being Platform API
 description: |-
   Complete API collection for the Well-Being Web Platform. 
 
@@ -25,7 +26,6 @@ variables:
   campTierId: ""
   campImageId: ""
   testimonialId: ""
-  teamMemberId: ""
   serviceId: ""
   consultationId: ""
   paymentRef: ""
@@ -37,3 +37,4 @@ variables:
   newsletterUnsubscribeToken: ""
   contactSubmissionId: ""
   chatSessionId: ""
+  teamMemberId: ""

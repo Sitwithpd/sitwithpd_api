@@ -1,5 +1,8 @@
 $kind: http-request
-description: Admin only. Multipart create. Required name, role. Optional photo file, photoUrl, isPublished, order.
+name: "[ADMIN] Create Team Member"
+description: |-
+  Admin only. Multipart create. Required name, role. Optional isPublished, order.
+  Photo: add a Body → form-data row key `photo` (type File) and pick a .jpg/.png/.webp — do not select a folder. Or omit photo and set photoUrl later on PATCH.
 url: "{{baseUrl}}/api/team"
 method: POST
 headers:
@@ -10,20 +13,25 @@ body:
     - type: text
       key: name
       value: Oluwatosin SAM-ABEREOLA(PD).
+      disabled: false
     - type: text
       key: role
       value: Founder & CEO
+      disabled: false
     - type: text
       key: isPublished
       value: "true"
+      disabled: false
     - type: text
       key: order
       value: "0"
+      disabled: false
     - type: file
       key: photo
       src:
-        - ""
-      description: Optional headshot (jpg, png, webp)
+        - postman-cloud:///1ef8d928-e53e-4860-961b-f238a70bf5bd
+      description: ""
+      disabled: false
 scripts:
   - type: afterResponse
     code: |-

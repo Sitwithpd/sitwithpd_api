@@ -1,5 +1,6 @@
 $kind: http-request
-description: Admin only. Multipart partial update (name, role, photo, photoUrl, isPublished, order).
+description: |-
+  Admin only. Multipart partial update. Optional photo — add form-data key `photo` (File) only when uploading; pick a file, not a folder.
 url: "{{baseUrl}}/api/team/{{teamMemberId}}"
 method: PATCH
 headers:
@@ -13,9 +14,4 @@ body:
     - type: text
       key: isPublished
       value: "true"
-    - type: file
-      key: photo
-      src:
-        - ""
-      description: Optional new headshot
 order: 5000
