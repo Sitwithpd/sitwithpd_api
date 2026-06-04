@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Well-Being Platform API",
-    "description": "Complete API collection for the Well-Being Web Platform. \n\n**Setup:**\n1. Set the `baseUrl` variable to your server (default: http://localhost:5000)\n2. Run **Register** or **Login** first — the token auto-saves to `authToken`\n3. All protected routes automatically use the saved token via collection-level auth\n4. **Blog:** Optional multipart field **authorId** (`users.id`); omit on create to default author to the authenticated admin. Optional **author** / **authorDisplayName** for public byline text. Responses include **authorDisplayName**, **author** `{ id, firstName, lastName } | null`, and **authorId**. **Login** / **Register** save **userId** when `data.user.id` is present. **Create** / **Create (Draft)** test scripts save `blogPostId` and `blogSlug`. Admin update/delete and **Get by ID (admin)** use `blogPostId`. Public **Get by Slug** uses `blogSlug`.\n5. **Admin list GETs** (users, programs, blog, payments, consultations, testimonials admin, camp participants, Cal event types): use `?page=1&limit=20` (limit max 100). **Get All Users** accepts optional `?search=` (first name, last name, email). **Get All Consultations** accepts optional `?search=` (user name/email, service title) and optional `?status=` (`PENDING`, `PENDING_PAYMENT`, `CONFIRMED`, `CANCELLED`, `COMPLETED`). **Get All Programs** — public `GET /api/programs` and admin `GET /api/programs/admin/all` — accepts optional `?search=` (title, description) and optional `?category=` (`LEADERS`, `STUDENTS`, `PROFESSIONALS`). Public list is unpaginated `{ data }`; admin list is paginated `{ data, meta }`. **Newsletter:** `POST /api/newsletter/subscribe` (JSON: `email`, optional `source`) stores locally and syncs to Resend Contacts when `RESEND_API_KEY` is set; optional comma-separated `RESEND_NEWSLETTER_SEGMENT_IDS`. `GET /api/newsletter/unsubscribe?token=` — browser redirect to `CLIENT_URL` query flags; `?format=json` or `Accept: application/json` returns JSON. **Admin:** `GET /api/admin/newsletter/subscriptions` — paginated (`page`, `limit`), optional `search` (email/source), optional `status` (`all`|`active`|`unsubscribed`); excludes `unsubscribeToken` from rows. **Programmes (learner progress):** `GET /api/dashboard` includes `progress` on each purchased programme (`payment` SUCCESS). `GET /api/dashboard/programs/:id` merges `completedAt` on modules plus `progress`. `POST /api/dashboard/programs/:programId/modules/:moduleId/complete` records module completion when the learner finishes — idempotent.\n6. **Chat:** `GET /api/chat/config` returns intro, disclaimers, and suggested prompts for the widget. Run **Create Chat Session** first — saves `chatSessionId` and sets httpOnly session cookies (enable Postman cookie jar). Then **Send Chat Message** (`stream: false` for JSON; set `stream: true` with `Accept: text/event-stream` for SSE when enabled). Admin: run **Reindex Chat Knowledge** after deploy (`npm run chat:reindex`) so RAG has indexed content.\n\n**Seeded Admin:**\n- Email: admin@wellbeing.com\n- Password: Admin@1234",
+    "description": "Complete API collection for the Well-Being Web Platform. \n\n**Setup:**\n1. Set the `baseUrl` variable to your server (default: http://localhost:5000)\n2. Run **Register** or **Login** first — the token auto-saves to `authToken`\n3. All protected routes automatically use the saved token via collection-level auth\n4. **Blog:** Optional multipart field **authorId** (`users.id`); omit on create to default author to the authenticated admin. Optional **author** / **authorDisplayName** for public byline text. Responses include **authorDisplayName**, **author** `{ id, firstName, lastName } | null`, and **authorId**. **Login** / **Register** save **userId** when `data.user.id` is present. **Create** / **Create (Draft)** test scripts save `blogPostId` and `blogSlug`. Admin update/delete and **Get by ID (admin)** use `blogPostId`. Public **Get by Slug** uses `blogSlug`.\n5. **Team (Our Team page):** Public `GET /api/team` — published members (`name`, `role`, `photoUrl`, `order`). Admin CRUD on `/api/team` with multipart field **photo** (or **photoUrl**). Saves `teamMemberId` on create. Admin list: `GET /api/team/admin/all?page=&limit=`. Optional photo: add form-data key `photo` (File) when uploading — pick a file, not a folder.\n6. **Admin list GETs** (users, programs, blog, payments, consultations, testimonials admin, camp participants, Cal event types): use `?page=1&limit=20` (limit max 100). **Get All Users** accepts optional `?search=` (first name, last name, email). **Get All Consultations** accepts optional `?search=` (user name/email, service title) and optional `?status=` (`PENDING`, `PENDING_PAYMENT`, `CONFIRMED`, `CANCELLED`, `COMPLETED`). **Get All Programs** — public `GET /api/programs` and admin `GET /api/programs/admin/all` — accepts optional `?search=` (title, description) and optional `?category=` (`LEADERS`, `STUDENTS`, `PROFESSIONALS`). Public list is unpaginated `{ data }`; admin list is paginated `{ data, meta }`. **Newsletter:** `POST /api/newsletter/subscribe` (JSON: `email`, optional `source`) stores locally and syncs to Resend Contacts when `RESEND_API_KEY` is set; optional comma-separated `RESEND_NEWSLETTER_SEGMENT_IDS`. `GET /api/newsletter/unsubscribe?token=` — browser redirect to `CLIENT_URL` query flags; `?format=json` or `Accept: application/json` returns JSON. **Admin:** `GET /api/admin/newsletter/subscriptions` — paginated (`page`, `limit`), optional `search` (email/source), optional `status` (`all`|`active`|`unsubscribed`); excludes `unsubscribeToken` from rows. **Programmes (learner progress):** `GET /api/dashboard` includes `progress` on each purchased programme (`payment` SUCCESS). `GET /api/dashboard/programs/:id` merges `completedAt` on modules plus `progress`. `POST /api/dashboard/programs/:programId/modules/:moduleId/complete` records module completion when the learner finishes — idempotent.\n7. **Chat:** `GET /api/chat/config` returns intro, disclaimers, and suggested prompts for the widget. Run **Create Chat Session** first — saves `chatSessionId` and sets httpOnly session cookies (enable Postman cookie jar). Then **Send Chat Message** (`stream: false` for JSON; set `stream: true` with `Accept: text/event-stream` for SSE when enabled). Admin: run **Reindex Chat Knowledge** after deploy (`npm run chat:reindex`) so RAG has indexed content.\n\n**Seeded Admin:**\n- Email: admin@wellbeing.com\n- Password: Admin@1234",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -15,6 +15,7 @@
     { "key": "campTierId", "value": "", "type": "string" },
     { "key": "campImageId", "value": "", "type": "string" },
     { "key": "testimonialId", "value": "", "type": "string" },
+    { "key": "teamMemberId", "value": "", "type": "string" },
     { "key": "serviceId", "value": "", "type": "string" },
     { "key": "consultationId", "value": "", "type": "string" },
     { "key": "paymentRef", "value": "", "type": "string" },
@@ -957,6 +958,102 @@
             "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
             "url": { "raw": "{{baseUrl}}/api/testimonials/{{testimonialId}}", "host": ["{{baseUrl}}"], "path": ["api", "testimonials", "{{testimonialId}}"] },
             "description": "Admin only. Deletes a testimonial."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "👥 Team",
+      "item": [
+        {
+          "name": "Get Team Members (Public)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/team", "host": ["{{baseUrl}}"], "path": ["api", "team"] },
+            "description": "Published team members for the Our Team page. Sorted by order, then createdAt."
+          }
+        },
+        {
+          "name": "Get Team Member by ID (Public)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/team/{{teamMemberId}}", "host": ["{{baseUrl}}"], "path": ["api", "team", "{{teamMemberId}}"] },
+            "description": "Single published team member. Returns 404 if unpublished or missing."
+          }
+        },
+        {
+          "name": "[ADMIN] Get All Team Members",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/team/admin/all?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "team", "admin", "all"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            },
+            "description": "Admin only. Paginated list including unpublished. Response: { data, meta }."
+          }
+        },
+        {
+          "name": "[ADMIN] Create Team Member",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data.id) {",
+                  "  pm.collectionVariables.set('teamMemberId', res.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/team", "host": ["{{baseUrl}}"], "path": ["api", "team"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "name", "value": "Oluwatosin SAM-ABEREOLA(PD).", "type": "text" },
+                { "key": "role", "value": "Founder & CEO", "type": "text" },
+                { "key": "isPublished", "value": "true", "type": "text" },
+                { "key": "order", "value": "0", "type": "text" }
+              ]
+            },
+            "description": "Admin only. Multipart create. Required name, role. Optional isPublished, order. Photo: add form-data key photo (File) when needed — pick a .jpg/.png/.webp file, not a folder. Or omit photo and set photoUrl on PATCH."
+          }
+        },
+        {
+          "name": "[ADMIN] Update Team Member",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/team/{{teamMemberId}}", "host": ["{{baseUrl}}"], "path": ["api", "team", "{{teamMemberId}}"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "role", "value": "Founder & CEO", "type": "text" },
+                { "key": "isPublished", "value": "true", "type": "text" }
+              ]
+            },
+            "description": "Admin only. Multipart partial update. Optional photo — add form-data key photo (File) only when uploading; pick a file, not a folder."
+          }
+        },
+        {
+          "name": "[ADMIN] Delete Team Member",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{authToken}}" }],
+            "url": { "raw": "{{baseUrl}}/api/team/{{teamMemberId}}", "host": ["{{baseUrl}}"], "path": ["api", "team", "{{teamMemberId}}"] },
+            "description": "Admin only. Permanent delete."
           }
         }
       ]
