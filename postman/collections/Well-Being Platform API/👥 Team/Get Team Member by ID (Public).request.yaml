@@ -1,0 +1,5 @@
+$kind: http-request
+description: Single published team member. Returns 404 if unpublished or missing.
+url: "{{baseUrl}}/api/team/{{teamMemberId}}"
+method: GET
+order: 2000

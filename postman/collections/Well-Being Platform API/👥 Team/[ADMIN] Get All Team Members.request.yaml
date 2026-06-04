@@ -1,0 +1,7 @@
+$kind: http-request
+description: Admin only. Paginated list including unpublished. Query page, limit (max 100).
+url: "{{baseUrl}}/api/team/admin/all?page=1&limit=20"
+method: GET
+headers:
+  Authorization: Bearer {{authToken}}
+order: 3000

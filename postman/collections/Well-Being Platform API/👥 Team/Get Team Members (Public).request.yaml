@@ -1,0 +1,5 @@
+$kind: http-request
+description: Published team members for the Our Team page. Sorted by order, then createdAt.
+url: "{{baseUrl}}/api/team"
+method: GET
+order: 1000

@@ -1,0 +1,35 @@
+$kind: http-request
+description: Admin only. Multipart create. Required name, role. Optional photo file, photoUrl, isPublished, order.
+url: "{{baseUrl}}/api/team"
+method: POST
+headers:
+  Authorization: Bearer {{authToken}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: name
+      value: Oluwatosin SAM-ABEREOLA(PD).
+    - type: text
+      key: role
+      value: Founder & CEO
+    - type: text
+      key: isPublished
+      value: "true"
+    - type: text
+      key: order
+      value: "0"
+    - type: file
+      key: photo
+      src:
+        - ""
+      description: Optional headshot (jpg, png, webp)
+scripts:
+  - type: afterResponse
+    code: |-
+      const res = pm.response.json();
+      if (res.data && res.data.id) {
+        pm.collectionVariables.set('teamMemberId', res.data.id);
+      }
+    language: text/javascript
+order: 4000

@@ -330,6 +330,20 @@ model Testimonial {
   @@map("testimonials")
 }
 
+// Site "Our Team" section — managed by admins (name, role, photo).
+model TeamMember {
+  id          String   @id @default(cuid())
+  name        String
+  role        String
+  photoUrl    String?
+  isPublished Boolean  @default(true)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("team_members")
+}
+
 model BlogPost {
   id                 String       @id @default(cuid())
   slug               String       @unique

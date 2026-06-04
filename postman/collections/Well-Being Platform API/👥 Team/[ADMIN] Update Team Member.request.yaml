@@ -1,0 +1,21 @@
+$kind: http-request
+description: Admin only. Multipart partial update (name, role, photo, photoUrl, isPublished, order).
+url: "{{baseUrl}}/api/team/{{teamMemberId}}"
+method: PATCH
+headers:
+  Authorization: Bearer {{authToken}}
+body:
+  type: formdata
+  content:
+    - type: text
+      key: role
+      value: Founder & CEO
+    - type: text
+      key: isPublished
+      value: "true"
+    - type: file
+      key: photo
+      src:
+        - ""
+      description: Optional new headshot
+order: 5000
